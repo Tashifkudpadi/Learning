@@ -276,6 +276,26 @@ print(len(name))
 print('au' in name)
 # All above methods does not change the original string
 
+def word_replacement():
+  name = "hello, beau"
+  word_to_replace=input('Enter a word to replace: ')
+  word_to_replace_with=input('Enter a word to replacement: ')
+  name = name.replace(word_to_replace, word_to_replace_with)
+  print("wordreplacemnet",name)
+word_replacement()  
+
+#miltiple values
+x, y, z = "Orange", "Banana", "Cherry"
+print(x)
+print(y)
+print(z)
+#unpacking
+fruits = ["apple", "banana", "cherry"]
+x, y, z = fruits
+print(x)
+print(y)
+print(z)
+
 # Escaping Characters
 name = "Beau"
 print("Be\nau")  # \n for new line
