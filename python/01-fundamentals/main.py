@@ -473,3 +473,20 @@ print('------------------------SUBSET-------------------------')
 
 mod2 = set1 < set2
 print(mod2)
+
+print('------------------------Update & Discard Method-------------------------')
+
+
+fruits = {"apple", "banana"}
+more_fruits = ["cherry", "banana", "mango"]
+fruits.update(more_fruits)
+print(fruits)
+# Output: {'apple', 'banana', 'cherry', 'mango'}
+
+fruits = {"apple", "banana", "cherry"}
+fruits.discard("banana")
+print(fruits)
+# Output: {'apple', 'cherry'}
+
+fruits.discard("mango")  # No error even though "mango" isn't present
+
