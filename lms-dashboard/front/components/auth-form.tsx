@@ -1,31 +1,101 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Eye, EyeOff, Mail, Lock, User, GraduationCap, BookOpen, Users, Award, TrendingUp } from "lucide-react"
+import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  GraduationCap,
+  BookOpen,
+  Users,
+  Award,
+  TrendingUp,
+} from "lucide-react";
 
 export default function AuthForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<string>(""); // Add state for role
+  const router = useRouter();
 
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    setIsLoading(true)
+  async function onSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+    type: "signin" | "signup"
+  ) {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
-    setTimeout(() => {
-      setIsLoading(false)
-      router.push("/dashboard")
-    }, 1000)
+    const formData = new FormData(event.currentTarget);
+    const data: any = {
+      email: formData.get(`${type}-email`) as string,
+      role: role, // Use controlled role state
+    };
+
+    if (type === "signup") {
+      data.first_name = formData.get("first-name") as string;
+      data.last_name = formData.get("last-name") as string;
+      data.password = formData.get("signup-password") as string;
+      data.confirm_password = formData.get("confirm-password") as string;
+    } else {
+      data.password = formData.get("signin-password") as string;
+    }
+
+    console.log("Form data:", data); // Debug: Log the data object
+
+    try {
+      const response = await axios.post(
+        `http://127.0.0.1:8000/auth/${
+          type === "signin" ? "login" : "register"
+        }`,
+        data,
+        { headers: { "Content-Type": "application/json" } }
+      );
+      localStorage.setItem("token", response.data.access_token);
+      router.push("/dashboard");
+    } catch (err: any) {
+      let errorMessage = "An error occurred";
+      if (err.response?.data?.detail) {
+        if (typeof err.response.data.detail === "string") {
+          errorMessage = err.response.data.detail;
+        } else if (Array.isArray(err.response.data.detail)) {
+          errorMessage = err.response.data.detail
+            .map((e: any) => e.msg)
+            .join(", ");
+        } else if (err.response.data.detail.msg) {
+          errorMessage = err.response.data.detail.msg;
+        }
+      }
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -33,7 +103,6 @@ export default function AuthForm() {
       {/* Left Side - Welcome Message */}
       <div className="hidden lg:flex flex-col justify-center px-12 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 text-white relative overflow-hidden">
         <div className="relative z-10 space-y-8">
-          {/* Logo and Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30">
@@ -41,33 +110,38 @@ export default function AuthForm() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">EduPlatform</h1>
-                <p className="text-white/80 text-sm">Learning Management System</p>
+                <p className="text-white/80 text-sm">
+                  Learning Management System
+                </p>
               </div>
             </div>
           </div>
-
-          {/* Welcome Message */}
           <div className="space-y-6">
             <div className="space-y-4">
               <h2 className="text-4xl font-bold text-white leading-tight">
                 Welcome to the Future of
-                <span className="block text-accent-foreground">Digital Learning</span>
+                <span className="block text-accent-foreground">
+                  Digital Learning
+                </span>
               </h2>
               <p className="text-white/80 text-lg leading-relaxed max-w-md">
-                Join thousands of learners and educators in our comprehensive learning management system. Access
-                courses, track progress, and achieve your educational goals.
+                Join thousands of learners and educators in our comprehensive
+                learning management system. Access courses, track progress, and
+                achieve your educational goals.
               </p>
             </div>
-
-            {/* Features */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold">Interactive Courses</h3>
-                  <p className="text-white/80 text-sm">Engaging content with videos, quizzes, and assignments</p>
+                  <h3 className="text-white font-semibold">
+                    Interactive Courses
+                  </h3>
+                  <p className="text-white/80 text-sm">
+                    Engaging content with videos, quizzes, and assignments
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -75,8 +149,12 @@ export default function AuthForm() {
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold">Progress Tracking</h3>
-                  <p className="text-white/80 text-sm">Monitor your learning journey with detailed analytics</p>
+                  <h3 className="text-white font-semibold">
+                    Progress Tracking
+                  </h3>
+                  <p className="text-white/80 text-sm">
+                    Monitor your learning journey with detailed analytics
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -84,8 +162,12 @@ export default function AuthForm() {
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold">Collaborative Learning</h3>
-                  <p className="text-white/80 text-sm">Connect with peers and instructors worldwide</p>
+                  <h3 className="text-white font-semibold">
+                    Collaborative Learning
+                  </h3>
+                  <p className="text-white/80 text-sm">
+                    Connect with peers and instructors worldwide
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -94,12 +176,12 @@ export default function AuthForm() {
                 </div>
                 <div>
                   <h3 className="text-white font-semibold">Certifications</h3>
-                  <p className="text-white/80 text-sm">Earn recognized certificates upon completion</p>
+                  <p className="text-white/80 text-sm">
+                    Earn recognized certificates upon completion
+                  </p>
                 </div>
               </div>
             </div>
-
-            {/* Stats */}
             <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20">
               <div className="text-center">
                 <div className="text-2xl font-bold text-white">1000+</div>
@@ -110,7 +192,9 @@ export default function AuthForm() {
                 <div className="text-white/80 text-sm">Students</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-white">4.9★</div>
+                <div className="text-2xl font-bold" text-white>
+                  4.9★
+                </div>
                 <div className="text-white/80 text-sm">Rating</div>
               </div>
             </div>
@@ -121,7 +205,6 @@ export default function AuthForm() {
       {/* Right Side - Auth Forms */}
       <div className="flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
-          {/* Mobile Header - Only visible on small screens */}
           <div className="lg:hidden text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
@@ -144,17 +227,26 @@ export default function AuthForm() {
                   <div className="mx-auto w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4">
                     <GraduationCap className="w-6 h-6 text-primary-foreground" />
                   </div>
-                  <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-                  <CardDescription>Sign in to continue your learning journey</CardDescription>
+                  <CardTitle className="text-2xl font-bold">
+                    Welcome Back
+                  </CardTitle>
+                  <CardDescription>
+                    Sign in to continue your learning journey
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <form onSubmit={onSubmit} className="space-y-4">
+                  {error && <p className="text-red-500 text-sm">{error}</p>}
+                  <form
+                    onSubmit={(e) => onSubmit(e, "signin")}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="signin-email">Email Address</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
                           id="signin-email"
+                          name="signin-email"
                           placeholder="Enter your email"
                           required
                           type="email"
@@ -164,7 +256,12 @@ export default function AuthForm() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signin-role">Role</Label>
-                      <Select required>
+                      <Select
+                        onValueChange={setRole}
+                        value={role}
+                        name="role"
+                        required
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select your role" />
                         </SelectTrigger>
@@ -178,7 +275,10 @@ export default function AuthForm() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="signin-password">Password</Label>
-                        <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                        <Link
+                          href="/forgot-password"
+                          className="text-sm text-primary hover:underline"
+                        >
                           Forgot password?
                         </Link>
                       </div>
@@ -186,6 +286,7 @@ export default function AuthForm() {
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
                           id="signin-password"
+                          name="signin-password"
                           required
                           type={showPassword ? "text" : "password"}
                           placeholder="Enter your password"
@@ -196,7 +297,11 @@ export default function AuthForm() {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -225,19 +330,37 @@ export default function AuthForm() {
                   <div className="mx-auto w-12 h-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mb-4">
                     <User className="w-6 h-6 text-secondary-foreground" />
                   </div>
-                  <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-                  <CardDescription>Join our learning community today</CardDescription>
+                  <CardTitle className="text-2xl font-bold">
+                    Create Account
+                  </CardTitle>
+                  <CardDescription>
+                    Join our learning community today
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <form onSubmit={onSubmit} className="space-y-4">
+                  {error && <p className="text-red-500 text-sm">{error}</p>}
+                  <form
+                    onSubmit={(e) => onSubmit(e, "signup")}
+                    className="space-y-4"
+                  >
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="first-name">First Name</Label>
-                        <Input id="first-name" placeholder="John" required />
+                        <Input
+                          id="first-name"
+                          name="first-name"
+                          placeholder="John"
+                          required
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="last-name">Last Name</Label>
-                        <Input id="last-name" placeholder="Doe" required />
+                        <Input
+                          id="last-name"
+                          name="last-name"
+                          placeholder="Doe"
+                          required
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -246,6 +369,7 @@ export default function AuthForm() {
                         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
                           id="signup-email"
+                          name="signup-email"
                           placeholder="Enter your email"
                           required
                           type="email"
@@ -255,7 +379,12 @@ export default function AuthForm() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="role">Role</Label>
-                      <Select required>
+                      <Select
+                        onValueChange={setRole}
+                        value={role}
+                        name="role"
+                        required
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select your role" />
                         </SelectTrigger>
@@ -272,6 +401,7 @@ export default function AuthForm() {
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
                           id="signup-password"
+                          name="signup-password"
                           required
                           type={showPassword ? "text" : "password"}
                           placeholder="Create a password"
@@ -282,7 +412,11 @@ export default function AuthForm() {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -292,6 +426,7 @@ export default function AuthForm() {
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <Input
                           id="confirm-password"
+                          name="confirm-password"
                           required
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="Confirm your password"
@@ -299,10 +434,16 @@ export default function AuthForm() {
                         />
                         <button
                           type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showConfirmPassword ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -328,5 +469,5 @@ export default function AuthForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }

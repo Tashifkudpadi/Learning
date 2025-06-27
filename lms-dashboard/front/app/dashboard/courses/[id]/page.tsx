@@ -1,10 +1,16 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import {
   Clock,
   Calendar,
@@ -20,8 +26,8 @@ import {
   Award,
   TrendingUp,
   ArrowLeft,
-} from "lucide-react"
-import Link from "next/link"
+} from "lucide-react";
+import Link from "next/link";
 
 export default function ViewCoursePage({ params }: { params: { id: string } }) {
   // Sample course data - in real app, fetch based on params.id
@@ -30,8 +36,6 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
     title: "Introduction to Web Development",
     description:
       "Master the fundamentals of web development with HTML, CSS, and JavaScript. Build responsive websites and learn modern development practices.",
-    longDescription:
-      "This comprehensive course covers everything you need to know to start your journey as a web developer. You'll learn HTML for structure, CSS for styling, and JavaScript for interactivity. By the end of this course, you'll be able to build fully responsive websites from scratch.",
     instructor: {
       name: "Dr. Jane Smith",
       title: "Senior Web Developer & Educator",
@@ -39,25 +43,12 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
       rating: 4.9,
       students: 15420,
     },
-    progress: 75,
-    enrolled: 120,
-    duration: "8 weeks",
+    students: 120,
     startDate: "Sep 1, 2023",
-    endDate: "Oct 26, 2023",
-    status: "In Progress",
-    rating: 4.8,
-    reviews: 1250,
-    level: "Beginner",
-    language: "English",
-    certificate: true,
-    price: "$99",
-    totalLessons: 24,
-    completedLessons: 18,
-    totalQuizzes: 8,
-    completedQuizzes: 6,
+    totalContents: 24,
     totalAssignments: 4,
-    completedAssignments: 3,
-  }
+    totalTests: 4,
+  };
 
   const lessons = [
     {
@@ -140,13 +131,14 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
       completed: false,
       locked: true,
     },
-  ]
+  ];
 
   const announcements = [
     {
       id: 1,
       title: "New Assignment Posted",
-      message: "CSS Flexbox assignment is now available. Due date: October 25th.",
+      message:
+        "CSS Flexbox assignment is now available. Due date: October 25th.",
       date: "Oct 15, 2023",
       type: "assignment",
     },
@@ -164,33 +156,33 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
       date: "Oct 10, 2023",
       type: "update",
     },
-  ]
+  ];
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "video":
-        return <Play className="h-4 w-4" />
+        return <Play className="h-4 w-4" />;
       case "quiz":
-        return <FileText className="h-4 w-4" />
+        return <FileText className="h-4 w-4" />;
       case "assignment":
-        return <BookOpen className="h-4 w-4" />
+        return <BookOpen className="h-4 w-4" />;
       default:
-        return <FileText className="h-4 w-4" />
+        return <FileText className="h-4 w-4" />;
     }
-  }
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "video":
-        return "text-blue-600"
+        return "text-blue-600";
       case "quiz":
-        return "text-green-600"
+        return "text-green-600";
       case "assignment":
-        return "text-purple-600"
+        return "text-purple-600";
       default:
-        return "text-slate-600"
+        return "text-slate-600";
     }
-  }
+  };
 
   return (
     <div className="space-y-8 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 relative">
@@ -226,63 +218,39 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
             {/* Course Info */}
             <div className="lg:col-span-2 space-y-6">
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">{course.level}</Badge>
-                  <Badge className="bg-green-100 text-green-800 border-green-200">{course.status}</Badge>
-                </div>
-                <h1 className="text-4xl font-bold text-white">{course.title}</h1>
+                <div className="flex items-center gap-2"></div>
+                <h1 className="text-4xl font-bold text-white">
+                  {course.title}
+                </h1>
                 <p className="text-lg text-blue-100">{course.description}</p>
               </div>
 
               {/* Course Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <div className="text-2xl font-bold text-white">{course.totalLessons}</div>
-                  <div className="text-sm text-blue-100">Lessons</div>
+                  <div className="text-2xl font-bold text-white">
+                    {course.totalContents}
+                  </div>
+                  <div className="text-sm text-blue-100">Contents</div>
                 </div>
+
                 <div className="text-center p-4 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <div className="text-2xl font-bold text-white">{course.duration}</div>
-                  <div className="text-sm text-blue-100">Duration</div>
-                </div>
-                <div className="text-center p-4 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <div className="text-2xl font-bold text-white">{course.enrolled}</div>
+                  <div className="text-2xl font-bold text-white">
+                    {course.students}
+                  </div>
                   <div className="text-sm text-blue-100">Students</div>
                 </div>
                 <div className="text-center p-4 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <div className="flex items-center justify-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-2xl font-bold text-white">{course.rating}</span>
+                  <div className="text-2xl font-bold text-white">
+                    {course.totalTests}
                   </div>
-                  <div className="text-sm text-blue-100">{course.reviews} reviews</div>
+                  <div className="text-sm text-blue-100">Tests</div>
                 </div>
-              </div>
-
-              {/* Progress */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-white">Your Progress</h3>
-                  <span className="text-lg font-bold text-white">{course.progress}%</span>
-                </div>
-                <Progress value={course.progress} className="h-3 bg-white/20 rounded-full" />
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="font-semibold text-white">
-                      {course.completedLessons}/{course.totalLessons}
-                    </div>
-                    <div className="text-blue-100">Lessons</div>
+                <div className="text-center p-4 bg-white/20 rounded-xl backdrop-blur-sm">
+                  <div className="text-2xl font-bold text-white">
+                    {course.totalAssignments}
                   </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-white">
-                      {course.completedQuizzes}/{course.totalQuizzes}
-                    </div>
-                    <div className="text-blue-100">Quizzes</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-semibold text-white">
-                      {course.completedAssignments}/{course.totalAssignments}
-                    </div>
-                    <div className="text-blue-100">Assignments</div>
-                  </div>
+                  <div className="text-sm text-blue-100">Assignments</div>
                 </div>
               </div>
             </div>
@@ -292,99 +260,81 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
               <Card className="bg-white/90 backdrop-blur-xl border border-blue-200 shadow-xl">
                 <CardHeader className="text-center">
                   <Avatar className="h-20 w-20 mx-auto ring-4 ring-white/30">
-                    <AvatarImage src={course.instructor.avatar || "/placeholder.svg"} alt={course.instructor.name} />
+                    <AvatarImage
+                      src={course.instructor.avatar || "/placeholder.svg"}
+                      alt={course.instructor.name}
+                    />
                     <AvatarFallback className="bg-blue-600 text-white text-lg font-bold">
                       {course.instructor.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <CardTitle className="text-slate-900">{course.instructor.name}</CardTitle>
-                  <CardDescription className="text-slate-700">{course.instructor.title}</CardDescription>
+                  <CardTitle className="text-slate-900">
+                    {course.instructor.name}
+                  </CardTitle>
+                  <CardDescription className="text-slate-700">
+                    {course.instructor.title}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-600">Rating</span>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold text-slate-900">{course.instructor.rating}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-600">Students</span>
-                    <span className="font-semibold text-slate-900">{course.instructor.students.toLocaleString()}</span>
-                  </div>
-                  <Separator className="bg-white/30" />
                   <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Message Instructor
                   </Button>
                 </CardContent>
               </Card>
-
-              {/* Course Actions */}
-              <div className="space-y-3">
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg">
-                  <Play className="h-4 w-4 mr-2" />
-                  Continue Learning
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full bg-white/50 backdrop-blur-sm border-white/40 text-slate-800 hover:bg-white/70"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Materials
-                </Button>
-                {course.certificate && (
-                  <Button
-                    variant="outline"
-                    className="w-full bg-white/50 backdrop-blur-sm border-white/40 text-slate-800 hover:bg-white/70"
-                  >
-                    <Award className="h-4 w-4 mr-2" />
-                    View Certificate
-                  </Button>
-                )}
-              </div>
             </div>
           </div>
         </div>
 
         {/* Course Content Tabs */}
         <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-blue-200 shadow-2xl p-6">
-          <Tabs defaultValue="lessons" className="w-full">
-            <TabsList className="bg-gradient-to-r from-blue-100 to-purple-100 backdrop-blur-sm border border-blue-200 rounded-xl p-1 shadow-lg">
+          <Tabs defaultValue="contents" className="w-full">
+            <TabsList className="grid w-full grid-cols-6 bg-gradient-to-r from-blue-100 to-purple-100 backdrop-blur-sm border border-blue-200 rounded-xl p-1 shadow-lg">
               <TabsTrigger
-                value="lessons"
+                value="contents"
                 className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
               >
-                Lessons
+                Contents
               </TabsTrigger>
               <TabsTrigger
-                value="overview"
+                value="learners"
                 className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
               >
-                Overview
+                Learners
               </TabsTrigger>
               <TabsTrigger
-                value="announcements"
+                value="batches"
                 className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
               >
-                Announcements
+                Batches
               </TabsTrigger>
               <TabsTrigger
-                value="discussions"
+                value="tests"
                 className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
               >
-                Discussions
+                Tests
+              </TabsTrigger>
+              <TabsTrigger
+                value="assignments"
+                className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
+              >
+                Assignments
+              </TabsTrigger>
+              <TabsTrigger
+                value="settings"
+                className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-lg rounded-lg font-medium transition-all duration-200"
+              >
+                Settings
               </TabsTrigger>
             </TabsList>
 
-            {/* Lessons Tab */}
-            <TabsContent value="lessons" className="mt-6">
+            {/* contents Tab */}
+            <TabsContent value="contents" className="mt-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-slate-900">Course Content</h3>
-                  <div className="text-sm text-slate-600">
-                    {course.completedLessons} of {course.totalLessons} lessons completed
-                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Course Content
+                  </h3>
                 </div>
                 <div className="space-y-2">
                   {lessons.map((lesson) => (
@@ -398,9 +348,9 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div
-                              className={`p-2 rounded-lg bg-white/50 ${getTypeColor(lesson.type)} ${
-                                lesson.completed ? "bg-green-100" : ""
-                              }`}
+                              className={`p-2 rounded-lg bg-white/50 ${getTypeColor(
+                                lesson.type
+                              )} ${lesson.completed ? "bg-green-100" : ""}`}
                             >
                               {lesson.completed ? (
                                 <CheckCircle className="h-4 w-4 text-green-600" />
@@ -411,7 +361,9 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
                               )}
                             </div>
                             <div>
-                              <h4 className="font-semibold text-slate-900">{lesson.title}</h4>
+                              <h4 className="font-semibold text-slate-900">
+                                {lesson.title}
+                              </h4>
                               <div className="flex items-center gap-2 text-sm text-slate-600">
                                 <Clock className="h-3 w-3" />
                                 <span>{lesson.duration}</span>
@@ -430,7 +382,11 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
                                 : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                             }
                           >
-                            {lesson.completed ? "Review" : lesson.locked ? "Locked" : "Start"}
+                            {lesson.completed
+                              ? "Review"
+                              : lesson.locked
+                              ? "Locked"
+                              : "Start"}
                           </Button>
                         </div>
                       </CardContent>
@@ -440,128 +396,49 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
               </div>
             </TabsContent>
 
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="mt-6">
+            {/* learners Tab */}
+            <TabsContent value="learners" className="mt-6">
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-4">Course Description</h3>
-                  <p className="text-slate-700 leading-relaxed">{course.longDescription}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-4">What You'll Learn</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-slate-700">Build responsive websites using HTML, CSS, and JavaScript</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-slate-700">Understand modern web development best practices</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-slate-700">Create interactive user interfaces with JavaScript</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-slate-700">Deploy your websites to the internet</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-4">Course Details</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-600" />
-                        <span className="text-slate-700">
-                          <strong>Start Date:</strong> {course.startDate}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-slate-600" />
-                        <span className="text-slate-700">
-                          <strong>End Date:</strong> {course.endDate}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-slate-600" />
-                        <span className="text-slate-700">
-                          <strong>Duration:</strong> {course.duration}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-slate-600" />
-                        <span className="text-slate-700">
-                          <strong>Level:</strong> {course.level}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-slate-600" />
-                        <span className="text-slate-700">
-                          <strong>Language:</strong> {course.language}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Award className="h-4 w-4 text-slate-600" />
-                        <span className="text-slate-700">
-                          <strong>Certificate:</strong> {course.certificate ? "Yes" : "No"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <h2>We have to show all learners here</h2>
               </div>
             </TabsContent>
 
-            {/* Announcements Tab */}
-            <TabsContent value="announcements" className="mt-6">
+            {/* batches Tab */}
+            <TabsContent value="batches" className="mt-6">
+              <div className="space-y-6">
+                <h2>We have to show all batches here</h2>
+              </div>
+            </TabsContent>
+
+            {/* tests Tab */}
+            <TabsContent value="tests" className="mt-6">
               <div className="space-y-4">
-                <h3 className="text-xl font-bold text-slate-900">Recent Announcements</h3>
-                <div className="space-y-4">
-                  {announcements.map((announcement) => (
-                    <Card key={announcement.id} className="bg-white/30 backdrop-blur-sm border border-white/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="space-y-2">
-                            <h4 className="font-semibold text-slate-900">{announcement.title}</h4>
-                            <p className="text-slate-700">{announcement.message}</p>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">
-                                {announcement.type}
-                              </Badge>
-                              <span className="text-xs text-slate-600">{announcement.date}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="space-y-6">
+                  <h2>
+                    We have to show all tests here with more tabs (its
+                    categories)
+                  </h2>
                 </div>
               </div>
             </TabsContent>
 
-            {/* Discussions Tab */}
-            <TabsContent value="discussions" className="mt-6">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-slate-900">Course Discussions</h3>
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    New Discussion
-                  </Button>
+            {/* assignments Tab */}
+            <TabsContent value="assignments" className="mt-6">
+              <div className="space-y-4">
+                <div className="space-y-6">
+                  <h2>
+                    We have to show all assignments here with more tabs (its
+                    categories)
+                  </h2>
                 </div>
-                <div className="text-center py-12">
-                  <MessageSquare className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                  <h4 className="text-lg font-semibold text-slate-900 mb-2">No discussions yet</h4>
-                  <p className="text-slate-600 mb-4">Be the first to start a discussion about this course!</p>
-                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
-                    Start Discussion
-                  </Button>
+              </div>
+            </TabsContent>
+
+            {/* settings Tab */}
+            <TabsContent value="settings" className="mt-6">
+              <div className="space-y-4">
+                <div className="space-y-6">
+                  <h2>We have to show all setting here</h2>
                 </div>
               </div>
             </TabsContent>
@@ -569,5 +446,5 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
