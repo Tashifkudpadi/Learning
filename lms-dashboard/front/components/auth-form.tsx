@@ -192,9 +192,7 @@ export default function AuthForm() {
                 <div className="text-white/80 text-sm">Students</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold" text-white>
-                  4.9★
-                </div>
+                <div className="text-2xl font-bold text-white">4.9★</div>
                 <div className="text-white/80 text-sm">Rating</div>
               </div>
             </div>

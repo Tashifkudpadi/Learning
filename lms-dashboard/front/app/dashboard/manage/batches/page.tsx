@@ -1,131 +1,199 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Search, Plus, Download } from "lucide-react"
+// components/BatchesPage.tsx
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchBatches,
+  addBatch,
+  updateBatch,
+  deleteBatch,
+  clearBatchError,
+} from "@/store/batches";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
 
 export default function BatchesPage() {
-  // Sample batches data
-  const batches = [
-    {
-      id: "1",
-      name: "Web Development 2023",
-      startDate: "Sep 1, 2023",
-      endDate: "Dec 15, 2023",
-      students: 25,
-      courses: 3,
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "Mobile App Development",
-      startDate: "Oct 10, 2023",
-      endDate: "Feb 28, 2024",
-      students: 20,
-      courses: 2,
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Data Science Fundamentals",
-      startDate: "Aug 15, 2023",
-      endDate: "Nov 30, 2023",
-      students: 30,
-      courses: 4,
-      status: "Active",
-    },
-    {
-      id: "4",
-      name: "UI/UX Design 2023",
-      startDate: "Jul 5, 2023",
-      endDate: "Oct 20, 2023",
-      students: 15,
-      courses: 2,
-      status: "Completed",
-    },
-    {
-      id: "5",
-      name: "Cloud Computing",
-      startDate: "Nov 1, 2023",
-      endDate: "Mar 15, 2024",
-      students: 22,
-      courses: 3,
-      status: "Upcoming",
-    },
-  ]
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { batches, loading, error } = useAppSelector((state) => state.batches);
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    start_date: "",
+    end_date: "",
+    num_learners: 0,
+  });
+
+  useEffect(() => {
+    dispatch(fetchBatches());
+  }, [dispatch]);
+
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: name === "num_learners" ? +value : value,
+    });
+  };
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    dispatch(clearBatchError());
+    if (editId) {
+      await dispatch(updateBatch({ batchId: editId, batchData: formData }));
+    } else {
+      await dispatch(addBatch(formData));
+    }
+    setFormData({ name: "", start_date: "", end_date: "", num_learners: 0 });
+    setEditId(null);
+    setIsDialogOpen(false);
+  };
+
+  const handleEdit = (batch: any) => {
+    setFormData(batch);
+    setEditId(batch.id);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (confirm("Delete this batch?")) {
+      await dispatch(deleteBatch(id));
+    }
+  };
+
+  const handleBatchClick = (id: number) => {
+    router.push(`/batches/${id}`); // route to student list page
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Batches</h1>
-          <p className="text-muted-foreground">Manage student batches and cohorts</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Batch
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input type="search" placeholder="Search batches..." className="w-full pl-8" />
-        </div>
+    <div className="space-y-6 p-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Batches</h1>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Add Batch</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editId ? "Edit" : "Add"} Batch</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+              <div>
+                <Label htmlFor="name">Batch Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="flex gap-4">
+                <div>
+                  <Label htmlFor="start_date">Start Date</Label>
+                  <Input
+                    id="start_date"
+                    name="start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end_date">End Date</Label>
+                  <Input
+                    id="end_date"
+                    name="end_date"
+                    type="date"
+                    value={formData.end_date}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="num_learners">Number of Learners</Label>
+                <Input
+                  id="num_learners"
+                  name="num_learners"
+                  type="number"
+                  value={formData.num_learners}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                {editId ? "Update" : "Add"} Batch
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Batch Name</TableHead>
+              <TableHead>#</TableHead>
+              <TableHead>Name</TableHead>
               <TableHead>Start Date</TableHead>
               <TableHead>End Date</TableHead>
-              <TableHead>Students</TableHead>
-              <TableHead>Courses</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead>Learners</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {batches.map((batch) => (
+            {batches.map((batch, index) => (
               <TableRow key={batch.id}>
-                <TableCell className="font-medium">{batch.name}</TableCell>
-                <TableCell>{batch.startDate}</TableCell>
-                <TableCell>{batch.endDate}</TableCell>
-                <TableCell>{batch.students}</TableCell>
-                <TableCell>{batch.courses}</TableCell>
+                <TableCell>{index + 1}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
-                      batch.status === "Active" ? "default" : batch.status === "Completed" ? "secondary" : "outline"
-                    }
+                  <button
+                    className="text-blue-600 hover:underline"
+                    onClick={() => handleBatchClick(batch.id)}
                   >
-                    {batch.status}
-                  </Badge>
+                    {batch.name}
+                  </button>
                 </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Edit Batch</DropdownMenuItem>
-                      <DropdownMenuItem>Manage Students</DropdownMenuItem>
-                      <DropdownMenuItem>Assign Courses</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                <TableCell>{batch.start_date}</TableCell>
+                <TableCell>{batch.end_date}</TableCell>
+                <TableCell>{batch.num_learners}</TableCell>
+                <TableCell className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEdit(batch)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(batch.id)}
+                  >
+                    Delete
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -133,5 +201,5 @@ export default function BatchesPage() {
         </Table>
       </div>
     </div>
-  )
+  );
 }

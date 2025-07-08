@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import axios from "axios";
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchUsers,
+  addUser,
+  updateUser,
+  deleteUser,
+  clearError,
+} from "@/store/users";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,7 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -37,25 +43,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MoreHorizontal, Search, UserPlus, Download } from "lucide-react";
-
-interface User {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  role: string;
-  last_active: string | null;
-  status: string;
-}
+import { User } from "@/store/types";
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({
+  const dispatch = useAppDispatch();
+  const { users, loading, error } = useAppSelector((state) => state.users);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editUserId, setEditUserId] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+  const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
     email: "",
@@ -63,97 +60,85 @@ export default function UsersPage() {
     password: "",
     confirm_password: "",
   });
-  const router = useRouter();
+  const [editFormData, setEditFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    role: "",
+  });
 
   // Fetch users on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/");
-      return;
-    }
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
-    async function fetchUsers() {
-      setIsLoading(true);
-      try {
-        const response = await axios.get("http://127.0.0.1:8000/users", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setUsers(response.data);
-        setFilteredUsers(response.data);
-      } catch (err: any) {
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          localStorage.removeItem("token");
-          router.push("/");
-        } else {
-          setError(err.response?.data?.detail || "Failed to fetch users");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  // Handle form input changes for add user
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-    fetchUsers();
-  }, [router]);
+  // Handle form input changes for edit user
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+  };
 
-  // Handle search
-  useEffect(() => {
-    setFilteredUsers(
-      users.filter(
-        (user) =>
-          user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-  }, [searchTerm, users]);
-
-  // Handle form submission
-  async function handleAddUser(e: React.FormEvent) {
+  // Handle add user form submission
+  const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+    dispatch(clearError());
+    await dispatch(addUser(formData));
+    setFormData({
+      first_name: "",
+      last_name: "",
+      email: "",
+      role: "",
+      password: "",
+      confirm_password: "",
+    });
+    setIsAddDialogOpen(false);
+  };
 
-    const token = localStorage.getItem("token");
-    try {
-      await axios.post("http://127.0.0.1:8000/auth/register", newUser, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const response = await axios.get("http://127.0.0.1:8000/users", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUsers(response.data);
-      setFilteredUsers(response.data);
-      setIsDialogOpen(false);
-      setNewUser({
-        first_name: "",
-        last_name: "",
-        email: "",
-        role: "",
-        password: "",
-        confirm_password: "",
-      });
-    } catch (err: any) {
-      let errorMessage = "Failed to add user";
-      if (err.response?.data?.detail) {
-        if (typeof err.response.data.detail === "string") {
-          errorMessage = err.response.data.detail;
-        } else if (Array.isArray(err.response.data.detail)) {
-          errorMessage = err.response.data.detail
-            .map((e: any) => e.msg)
-            .join(", ");
-        } else if (err.response.data.detail.msg) {
-          errorMessage = err.response.data.detail.msg;
-        }
-      }
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  // Handle edit user form submission
+  const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editUserId) return;
+    dispatch(clearError());
+    await dispatch(updateUser({ userId: editUserId, userData: editFormData }));
+    setEditFormData({
+      first_name: "",
+      last_name: "",
+      email: "",
+      role: "",
+    });
+    setIsEditDialogOpen(false);
+    setEditUserId(null);
+  };
+
+  // Handle delete user
+  const handleDelete = async (userId: number) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+    dispatch(clearError());
+    await dispatch(deleteUser(userId));
+  };
+
+  // Handle edit user click
+  const handleEditClick = (user: User) => {
+    setEditUserId(user.id);
+    setEditFormData({
+      first_name: user.name.split(" ")[0],
+      last_name: user.name.split(" ").slice(1).join(" "),
+      email: user.email,
+      role: user.role,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Filter users based on search
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(search.toLowerCase()) ||
+      user.email.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="space-y-6 p-6">
@@ -169,7 +154,7 @@ export default function UsersPage() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <UserPlus className="mr-2 h-4 w-4" />
@@ -180,29 +165,27 @@ export default function UsersPage() {
               <DialogHeader>
                 <DialogTitle>Add New User</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleAddUser} className="space-y-4">
+              <form onSubmit={handleAddSubmit} className="space-y-4">
                 {error && <p className="text-red-500 text-sm">{error}</p>}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="first-name">First Name</Label>
+                    <Label htmlFor="first_name">First Name</Label>
                     <Input
-                      id="first-name"
-                      value={newUser.first_name}
-                      onChange={(e) =>
-                        setNewUser({ ...newUser, first_name: e.target.value })
-                      }
+                      id="first_name"
+                      name="first_name"
+                      value={formData.first_name}
+                      onChange={handleInputChange}
                       placeholder="John"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="last-name">Last Name</Label>
+                    <Label htmlFor="last_name">Last Name</Label>
                     <Input
-                      id="last-name"
-                      value={newUser.last_name}
-                      onChange={(e) =>
-                        setNewUser({ ...newUser, last_name: e.target.value })
-                      }
+                      id="last_name"
+                      name="last_name"
+                      value={formData.last_name}
+                      onChange={handleInputChange}
                       placeholder="Doe"
                       required
                     />
@@ -212,21 +195,21 @@ export default function UsersPage() {
                   <Label htmlFor="email">Email Address</Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
-                    value={newUser.email}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, email: e.target.value })
-                    }
-                    placeholder="john@example.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter email"
                     required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
                   <Select
-                    value={newUser.role}
+                    name="role"
+                    value={formData.role}
                     onValueChange={(value) =>
-                      setNewUser({ ...newUser, role: value })
+                      setFormData({ ...formData, role: value })
                     }
                     required
                   >
@@ -244,27 +227,22 @@ export default function UsersPage() {
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
-                    value={newUser.password}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, password: e.target.value })
-                    }
-                    placeholder="Create a password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Create password"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Label htmlFor="confirm_password">Confirm Password</Label>
                   <Input
-                    id="confirm-password"
+                    id="confirm_password"
+                    name="confirm_password"
                     type="password"
-                    value={newUser.confirm_password}
-                    onChange={(e) =>
-                      setNewUser({
-                        ...newUser,
-                        confirm_password: e.target.value,
-                      })
-                    }
+                    value={formData.confirm_password}
+                    onChange={handleInputChange}
                     placeholder="Confirm password"
                     required
                   />
@@ -272,9 +250,9 @@ export default function UsersPage() {
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                  disabled={isLoading}
+                  disabled={loading}
                 >
-                  {isLoading ? (
+                  {loading ? (
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                       Adding user...
@@ -296,43 +274,50 @@ export default function UsersPage() {
             type="search"
             placeholder="Search users..."
             className="w-full pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {isLoading ? (
-        <div>Loading...</div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>id</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Last Active</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Last Active</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+                <TableCell colSpan={5} className="text-center">
+                  Loading...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-red-500">
+                  {error}
+                </TableCell>
+              </TableRow>
+            ) : filteredUsers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center">
+                  No users found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredUsers.map((user, index) => (
                 <TableRow key={user.id}>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage
-                          src={`/placeholder.svg?${user.id}`}
-                          alt={`${user.first_name} ${user.last_name}`}
-                        />
-                        <AvatarFallback>
-                          {user.first_name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{`${user.first_name} ${user.last_name}`}</span>
+                      <span>{user.name}</span>
                     </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -341,21 +326,11 @@ export default function UsersPage() {
                   </TableCell>
                   <TableCell>
                     {user.last_active
-                      ? new Date(user.last_active).toLocaleString()
+                      ? new Date(user.last_active).toLocaleString("en-US", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })
                       : "Never"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        user.status === "Active"
-                          ? "default"
-                          : user.status === "Inactive"
-                          ? "secondary"
-                          : "destructive"
-                      }
-                    >
-                      {user.status}
-                    </Badge>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -366,26 +341,101 @@ export default function UsersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
-                        <DropdownMenuItem>Edit User</DropdownMenuItem>
-                        <DropdownMenuItem>Change Role</DropdownMenuItem>
-                        <DropdownMenuItem>Reset Password</DropdownMenuItem>
-                        {user.status !== "Suspended" ? (
-                          <DropdownMenuItem className="text-red-600">
-                            Suspend User
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem>Reactivate User</DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem onClick={() => handleEditClick(user)}>
+                          Edit User
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(user.id)}
+                          className="text-red-600"
+                        >
+                          Delete User
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_first_name">First Name</Label>
+                <Input
+                  id="edit_first_name"
+                  name="first_name"
+                  value={editFormData.first_name}
+                  onChange={handleEditInputChange}
+                  placeholder="John"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_last_name">Last Name</Label>
+                <Input
+                  id="edit_last_name"
+                  name="last_name"
+                  value={editFormData.last_name}
+                  onChange={handleEditInputChange}
+                  placeholder="Doe"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_email">Email Address</Label>
+              <Input
+                id="edit_email"
+                name="email"
+                type="email"
+                value={editFormData.email}
+                onChange={handleEditInputChange}
+                placeholder="Enter email"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit_role">Role</Label>
+              <Select
+                name="role"
+                value={editFormData.role}
+                onValueChange={(value) =>
+                  setEditFormData({ ...editFormData, role: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="faculty">Faculty</SelectItem>
+                  <SelectItem value="admin">Administrator</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Updating user...
+                </div>
+              ) : (
+                "Update User"
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

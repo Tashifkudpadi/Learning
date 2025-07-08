@@ -6,6 +6,8 @@ from schemas.user import UserCreate, Token
 from utils.auth import get_password_hash, verify_password, create_access_token
 from database import get_db
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
+
 
 router = APIRouter()
 
@@ -29,14 +31,17 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
         last_name=user.last_name,
         email=user.email,
         hashed_password=hashed_password,
-        role=user.role
+        role=user.role,
+        last_active=datetime.utcnow() 
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     
-    access_token = create_access_token(data={"sub": user.email, "role": user.role})
-    return {"access_token": access_token, "token_type": "bearer"}
+    access_token = create_access_token(data={"sub": user.email, "role": user.role.value})
+    return {"access_token": access_token, "token_type": "bearer", "first_name": db_user.first_name,
+    "email": db_user.email,
+    "role": db_user.role.value}
 
 @router.post("/login", response_model=Token)
 async def login(request: LoginRequest, db: Session = Depends(get_db)):
@@ -47,6 +52,11 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             detail="Incorrect email, password, or role",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    access_token = create_access_token(data={"sub": db_user.email, "role": db_user.role})
-    return {"access_token": access_token, "token_type": "bearer"}
+     # Update last_active timestamp
+    db_user.last_active = datetime.utcnow()
+    db.add(db_user)
+    db.commit()
+    access_token = create_access_token(data={"sub": db_user.email, "role": db_user.role.value})
+    return {"access_token": access_token, "token_type": "bearer",  "first_name": db_user.first_name,
+    "email": db_user.email,
+    "role": db_user.role.value}

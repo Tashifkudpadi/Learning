@@ -1,140 +1,255 @@
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MoreHorizontal, Search, UserPlus, Download } from "lucide-react"
+"use client";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store";
+import {
+  fetchFaculty,
+  addFaculty,
+  updateFaculty,
+  deleteFaculty,
+} from "@/store/faculties";
+import { fetchSubjects } from "@/store/subjects";
 
-export default function FacultiesPage() {
-  // Sample faculty data
-  const faculties = [
-    {
-      id: "1",
-      name: "Dr. Jane Smith",
-      email: "jane.smith@example.com",
-      department: "Computer Science",
-      courses: 3,
-      joinDate: "Jan 15, 2022",
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "Prof. John Doe",
-      email: "john.doe@example.com",
-      department: "Web Development",
-      courses: 2,
-      joinDate: "Mar 10, 2022",
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Dr. Robert Johnson",
-      email: "robert.johnson@example.com",
-      department: "Database Systems",
-      courses: 2,
-      joinDate: "Feb 5, 2021",
-      status: "On Leave",
-    },
-    {
-      id: "4",
-      name: "Sarah Williams",
-      email: "sarah.williams@example.com",
-      department: "Mobile Development",
-      courses: 1,
-      joinDate: "Aug 20, 2022",
-      status: "Active",
-    },
-    {
-      id: "5",
-      name: "Dr. Michael Brown",
-      email: "michael.brown@example.com",
-      department: "Artificial Intelligence",
-      courses: 2,
-      joinDate: "May 15, 2022",
-      status: "Active",
-    },
-  ]
+interface Faculty {
+  id: number;
+  user: { id: number; first_name: string; last_name: string; email: string };
+  subjects: { id: number; name: string; code: string }[];
+}
+
+const FacultiesPage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { faculty, error } = useSelector((state: RootState) => state.faculty);
+  const { subjects } = useSelector((state: RootState) => state.subjects);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [subjectIds, setSubjectIds] = useState<number[]>([]);
+  const [editingFaculty, setEditingFaculty] = useState<Faculty | null>(null);
+
+  useEffect(() => {
+    dispatch(fetchFaculty());
+    dispatch(fetchSubjects());
+  }, [dispatch]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const facultyData = {
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      password,
+      subject_ids: subjectIds,
+    };
+    try {
+      if (editingFaculty) {
+        await dispatch(
+          updateFaculty({
+            facultyId: editingFaculty.id,
+            facultyData: {
+              first_name: firstName,
+              last_name: lastName,
+              email,
+              subject_ids: subjectIds,
+            },
+          })
+        ).unwrap();
+        setEditingFaculty(null);
+      } else {
+        await dispatch(addFaculty(facultyData)).unwrap();
+      }
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPassword("");
+      setSubjectIds([]);
+    } catch (err) {
+      console.error("Failed to save faculty:", err);
+    }
+  };
+
+  const handleEdit = (faculty: Faculty) => {
+    setEditingFaculty(faculty);
+    setFirstName(faculty.user.first_name);
+    setLastName(faculty.user.last_name);
+    setEmail(faculty.user.email);
+    setPassword("");
+    setSubjectIds(faculty.subjects.map((s) => s.id));
+  };
+
+  const handleDelete = async (facultyId: number) => {
+    if (window.confirm("Are you sure you want to delete this faculty?")) {
+      try {
+        await dispatch(deleteFaculty(facultyId)).unwrap();
+      } catch (err) {
+        console.error("Failed to delete faculty:", err);
+      }
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Faculty</h1>
-          <p className="text-muted-foreground">Manage faculty members and instructors</p>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">
+        {editingFaculty ? "Edit Faculty" : "Manage Faculty"}
+      </h1>
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add Faculty
-          </Button>
+      )}
+      <form
+        onSubmit={handleSubmit}
+        className="mb-8 bg-white p-6 rounded shadow"
+      >
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              First Name
+            </label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Last Name
+            </label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              required
+            />
+          </div>
+          {!editingFaculty && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                required
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Subjects
+            </label>
+            <select
+              multiple
+              value={subjectIds.map(String)}
+              onChange={(e) =>
+                setSubjectIds(
+                  Array.from(e.target.selectedOptions, (option) =>
+                    Number(option.value)
+                  )
+                )
+              }
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            >
+              {subjects.map((subject) => (
+                <option
+                  key={subject.id}
+                  value={subject.id}
+                >{`${subject.name} (${subject.code})`}</option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input type="search" placeholder="Search faculty..." className="w-full pl-8" />
+        <div className="mt-4">
+          <button
+            type="submit"
+            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+          >
+            {editingFaculty ? "Update Faculty" : "Add Faculty"}
+          </button>
+          {editingFaculty && (
+            <button
+              type="button"
+              onClick={() => {
+                setEditingFaculty(null);
+                setFirstName("");
+                setLastName("");
+                setEmail("");
+                setPassword("");
+                setSubjectIds([]);
+              }}
+              className="ml-2 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          )}
         </div>
-      </div>
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Courses</TableHead>
-              <TableHead>Join Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {faculties.map((faculty) => (
-              <TableRow key={faculty.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={`/placeholder.svg?${faculty.id}`} alt={faculty.name} />
-                      <AvatarFallback>{faculty.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span>{faculty.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{faculty.email}</TableCell>
-                <TableCell>{faculty.department}</TableCell>
-                <TableCell>{faculty.courses}</TableCell>
-                <TableCell>{faculty.joinDate}</TableCell>
-                <TableCell>
-                  <Badge variant={faculty.status === "Active" ? "default" : "secondary"}>{faculty.status}</Badge>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Profile</DropdownMenuItem>
-                      <DropdownMenuItem>Edit Details</DropdownMenuItem>
-                      <DropdownMenuItem>Assign Courses</DropdownMenuItem>
-                      <DropdownMenuItem>Send Message</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
+      </form>
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Subjects
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {faculty.map((f) => (
+              <tr key={f.id}>
+                <td className="px-6 py-4 whitespace-nowrap">{`${f.user.first_name} ${f.user.last_name}`}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{f.user.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {f.subjects.map((s) => s.name).join(", ")}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <button
+                    onClick={() => handleEdit(f)}
+                    className="text-indigo-600 hover:text-indigo-900 mr-4"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(f.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
             ))}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default FacultiesPage;
