@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models.student import Student
-from models.batch import Batch
-from models.batch_student import batch_students
 from database import get_db
 from schemas.student import StudentCreate, StudentUpdate, StudentOut
 from typing import List
@@ -12,29 +10,23 @@ router = APIRouter()
 @router.post("/", response_model=StudentOut)
 def create_student(student: StudentCreate, db: Session = Depends(get_db)):
     db_student = Student(
-        first_name=student.first_name,
-        last_name=student.last_name,
-        email=student.email,
+        name = student.name,
+        email = student.email,
+        roll_number = student.roll_number,
+        mobile_number = student.mobile_number,
         enrollment_date=student.enrollment_date
     )
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
-
-    if student.batch_ids:
-        for batch_id in student.batch_ids:
-            batch = db.query(Batch).filter(Batch.id == batch_id).first()
-            if batch:
-                db_student.batches.append(batch)
-        db.commit()
     
     return StudentOut(
         id=db_student.id,
-        first_name=db_student.first_name,
-        last_name=db_student.last_name,
+        name=db_student.name,
         email=db_student.email,
+        roll_number=db_student.roll_number,
+        mobile_number=db_student.mobile_number,
         enrollment_date=db_student.enrollment_date,
-        batches=[b.name for b in db_student.batches]
     )
 
 @router.get("/", response_model=List[StudentOut])
@@ -43,11 +35,11 @@ def get_students(db: Session = Depends(get_db)):
     return [
         StudentOut(
             id=s.id,
-            first_name=s.first_name,
-            last_name=s.last_name,
+            name=s.name,
             email=s.email,
+            roll_number=s.roll_number,
+            mobile_number=s.mobile_number,
             enrollment_date=s.enrollment_date,
-            batches=[b.name for b in s.batches]
         ) for s in students
     ]
 
@@ -58,11 +50,11 @@ def get_student(student_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Student not found")
     return StudentOut(
         id=student.id,
-        first_name=student.first_name,
-        last_name=student.last_name,
+        name=student.name,
         email=student.email,
+        roll_number=student.roll_number,
+        mobile_number=student.mobile_number,
         enrollment_date=student.enrollment_date,
-        batches=[b.name for b in student.batches]
     )
 
 @router.put("/{student_id}", response_model=StudentOut)
@@ -71,27 +63,21 @@ def update_student(student_id: int, update: StudentUpdate, db: Session = Depends
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     
-    student.first_name = update.first_name
-    student.last_name = update.last_name
+    student.name = update.name
     student.email = update.email
+    student.roll_number = update.roll_number
+    student.mobile_number = update.mobile_number
     student.enrollment_date = update.enrollment_date
-
-    student.batches.clear()
-    if update.batch_ids:
-        for batch_id in update.batch_ids:
-            batch = db.query(Batch).filter(Batch.id == batch_id).first()
-            if batch:
-                student.batches.append(batch)
 
     db.commit()
     db.refresh(student)
     return StudentOut(
         id=student.id,
-        first_name=student.first_name,
-        last_name=student.last_name,
+        name=student.name,
         email=student.email,
+        roll_number=student.roll_number,
+        mobile_number=student.mobile_number,
         enrollment_date=student.enrollment_date,
-        batches=[b.name for b in student.batches]
     )
 
 @router.delete("/{student_id}")

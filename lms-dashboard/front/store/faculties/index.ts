@@ -3,8 +3,10 @@ import axiosInstance from "@/utils/axios";
 
 interface Faculty {
   id: number;
-  user: { id: number; first_name: string; last_name: string; email: string };
-  subjects: { id: number; name: string; code: string }[];
+  name: string;
+  email: string;
+  mobile_number: string;
+  subject_ids: number[];
 }
 
 interface FacultyState {
@@ -35,7 +37,7 @@ export const fetchFaculty = createAsyncThunk(
   "faculty/fetchFaculty",
   async (_, { dispatch }) => {
     try {
-      const response = await axiosInstance.get("/faculty");
+      const response = await axiosInstance.get("/faculties");
       dispatch(setFaculty(response.data));
     } catch (error: any) {
       const errorMessage =
@@ -49,16 +51,15 @@ export const addFaculty = createAsyncThunk(
   "faculty/addFaculty",
   async (
     facultyData: {
-      first_name: string;
-      last_name: string;
+      name: string;
       email: string;
-      password: string;
+      mobile_number: string;
       subject_ids: number[];
     },
     { dispatch }
   ) => {
     try {
-      const response = await axiosInstance.post("/faculty", facultyData);
+      const response = await axiosInstance.post("/faculties", facultyData);
       dispatch(fetchFaculty());
       return response.data;
     } catch (error: any) {
@@ -82,9 +83,9 @@ export const updateFaculty = createAsyncThunk(
     }: {
       facultyId: number;
       facultyData: {
-        first_name?: string;
-        last_name?: string;
+        name?: string;
         email?: string;
+        mobile_number?: string;
         subject_ids?: number[];
       };
     },
@@ -92,7 +93,7 @@ export const updateFaculty = createAsyncThunk(
   ) => {
     try {
       const response = await axiosInstance.put(
-        `/faculty/${facultyId}`,
+        `/faculties/${facultyId}`,
         facultyData
       );
       dispatch(fetchFaculty());
@@ -113,7 +114,7 @@ export const deleteFaculty = createAsyncThunk(
   "faculty/deleteFaculty",
   async (facultyId: number, { dispatch }) => {
     try {
-      await axiosInstance.delete(`/faculty/${facultyId}`);
+      await axiosInstance.delete(`/faculties/${facultyId}`);
       dispatch(fetchFaculty());
     } catch (error: any) {
       const errorMessage =

@@ -1,7 +1,8 @@
+// SubjectsPage.tsx
 "use client";
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState, AppDispatch } from "@/store";
+
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   fetchSubjects,
   addSubject,
@@ -9,202 +10,299 @@ import {
   deleteSubject,
 } from "@/store/subjects";
 import { fetchFaculty } from "@/store/faculties";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Search, Plus, Download } from "lucide-react";
 
 interface Subject {
   id: number;
   name: string;
   code: string;
-  faculty: {
-    id: number;
-    user: { first_name: string; last_name: string };
-  } | null;
+  faculty_ids: number[];
 }
 
-const SubjectsPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { subjects, error } = useSelector((state: RootState) => state.subjects);
-  const { faculty } = useSelector((state: RootState) => state.faculty);
+export default function SubjectsPage() {
+  const dispatch = useAppDispatch();
+  const { subjects, error } = useAppSelector((state) => state.subjects);
+  const { faculty } = useAppSelector((state) => state.faculty);
 
-  const [name, setName] = useState("");
-  const [code, setCode] = useState("");
-  const [facultyId, setFacultyId] = useState<number | null>(null);
-  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  const [search, setSearch] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    code: "",
+    faculty_ids: [] as number[],
+  });
 
   useEffect(() => {
     dispatch(fetchSubjects());
     dispatch(fetchFaculty());
   }, [dispatch]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleFacultyChange = (facultyId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      faculty_ids: prev.faculty_ids.includes(facultyId)
+        ? prev.faculty_ids.filter((id) => id !== facultyId)
+        : [...prev.faculty_ids, facultyId],
+    }));
+  };
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const subjectData = { name, code, faculty_id: facultyId };
-    try {
-      if (editingSubject) {
-        await dispatch(
-          updateSubject({
-            subjectId: editingSubject.id,
-            subjectData: { name, code, faculty_id: facultyId },
-          })
-        ).unwrap();
-        setEditingSubject(null);
-      } else {
-        await dispatch(addSubject(subjectData)).unwrap();
-      }
-      setName("");
-      setCode("");
-      setFacultyId(null);
-    } catch (err) {
-      console.error("Failed to save subject:", err);
+    await dispatch(addSubject(formData));
+    setFormData({
+      name: "",
+      code: "",
+      faculty_ids: [],
+    });
+    setIsAddDialogOpen(false);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editId) return;
+    await dispatch(
+      updateSubject({
+        subjectId: editId,
+        subjectData: formData,
+      })
+    );
+    setEditId(null);
+    setIsEditDialogOpen(false);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this subject?")) {
+      dispatch(deleteSubject(id));
     }
   };
 
-  const handleEdit = (subject: Subject) => {
-    setEditingSubject(subject);
-    setName(subject.name);
-    setCode(subject.code);
-    setFacultyId(subject.faculty ? subject.faculty.id : null);
+  const handleEditClick = (subject: Subject) => {
+    setEditId(subject.id);
+    setFormData({
+      name: subject.name,
+      code: subject.code,
+      faculty_ids: subject.faculty_ids,
+    });
+    setIsEditDialogOpen(true);
   };
 
-  const handleDelete = async (subjectId: number) => {
-    if (window.confirm("Are you sure you want to delete this subject?")) {
-      try {
-        await dispatch(deleteSubject(subjectId)).unwrap();
-      } catch (err) {
-        console.error("Failed to delete subject:", err);
-      }
-    }
+  const filtered = subjects.filter(
+    (s) =>
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.code.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const getFacultyNames = (facultyIds: number[]) => {
+    return faculty
+      .filter((f) => facultyIds.includes(f.id))
+      .map((f) => f.name)
+      .join(", ");
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">
-        {editingSubject ? "Edit Subject" : "Manage Subjects"}
-      </h1>
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+    <div className="space-y-6 p-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Subjects</h1>
+          <p className="text-muted-foreground">
+            Manage all subjects and faculty assignments
+          </p>
         </div>
-      )}
-      <form
-        onSubmit={handleSubmit}
-        className="mb-8 bg-white p-6 rounded shadow"
-      >
-        <div className="grid grid-cols-1 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Subject Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Subject Code
-            </label>
-            <input
-              type="text"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Faculty
-            </label>
-            <select
-              value={facultyId || ""}
-              onChange={(e) => setFacultyId(Number(e.target.value) || null)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-            >
-              <option value="">No Faculty</option>
-              {faculty.map((f) => (
-                <option
-                  key={f.id}
-                  value={f.id}
-                >{`${f.user.first_name} ${f.user.last_name}`}</option>
-              ))}
-            </select>
-          </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline">
+            <Download className="mr-2 h-4 w-4" /> Export
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add Subject
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add New Subject</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddSubmit} className="space-y-4">
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+                <Input
+                  name="name"
+                  placeholder="Subject Name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+                <Input
+                  name="code"
+                  placeholder="Subject Code"
+                  value={formData.code}
+                  onChange={handleChange}
+                  required
+                />
+                <div className="space-y-2">
+                  <Label>Assign Faculty</Label>
+                  <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded p-2">
+                    {faculty.map((facultyMember) => (
+                      <label
+                        key={facultyMember.id}
+                        className="flex items-center space-x-2 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.faculty_ids.includes(
+                            facultyMember.id
+                          )}
+                          onChange={() => handleFacultyChange(facultyMember.id)}
+                          className="rounded"
+                        />
+                        <span>{facultyMember.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <Button type="submit">Add Subject</Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
-        <div className="mt-4">
-          <button
-            type="submit"
-            className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
-          >
-            {editingSubject ? "Update Subject" : "Add Subject"}
-          </button>
-          {editingSubject && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditingSubject(null);
-                setName("");
-                setCode("");
-                setFacultyId(null);
-              }}
-              className="ml-2 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </form>
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Code
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Faculty
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {subjects.map((subject) => (
-              <tr key={subject.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{subject.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{subject.code}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {subject.faculty
-                    ? `${subject.faculty.user.first_name} ${subject.faculty.user.last_name}`
-                    : "None"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => handleEdit(subject)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(subject.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
+
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search subjects..."
+            className="w-full pl-8"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Code</TableHead>
+              <TableHead>Faculty</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((subject, idx) => (
+              <TableRow key={subject.id}>
+                <TableCell>{idx + 1}</TableCell>
+                <TableCell>{subject.name}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{subject.code}</Badge>
+                </TableCell>
+                <TableCell>
+                  {getFacultyNames(subject.faculty_ids) || "No Faculty"}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleEditClick(subject)}
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(subject.id)}
+                        className="text-red-600"
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Subject</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <Input
+              name="name"
+              placeholder="Subject Name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+            <Input
+              name="code"
+              placeholder="Subject Code"
+              value={formData.code}
+              onChange={handleChange}
+              required
+            />
+            <div className="space-y-2">
+              <Label>Assign Faculty</Label>
+              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded p-2">
+                {faculty.map((facultyMember) => (
+                  <label
+                    key={facultyMember.id}
+                    className="flex items-center space-x-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.faculty_ids.includes(facultyMember.id)}
+                      onChange={() => handleFacultyChange(facultyMember.id)}
+                      className="rounded"
+                    />
+                    <span>{facultyMember.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <Button type="submit">Update Subject</Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
-
-export default SubjectsPage;
+}

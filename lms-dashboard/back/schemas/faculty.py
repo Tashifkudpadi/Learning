@@ -1,21 +1,28 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import List, Optional
+
 
 class FacultyBase(BaseModel):
-    first_name: str
-    last_name: str
+    name: str
     email: EmailStr
-    subject_id: Optional[int] = None
+    mobile_number: str
+    subject_ids: List[int] = []
+
 
 class FacultyCreate(FacultyBase):
     pass
 
+
 class FacultyUpdate(FacultyBase):
     pass
 
-class FacultyOut(FacultyBase):
+
+class FacultyOut(BaseModel):
     id: int
-    subject_name: Optional[str] = None
+    name: str
+    email: EmailStr
+    mobile_number: str
+    subject_ids: List[int] = []
 
     class Config:
         orm_mode = True

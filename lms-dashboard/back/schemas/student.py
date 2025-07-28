@@ -3,11 +3,11 @@ from datetime import date
 from typing import List, Optional
 
 class StudentBase(BaseModel):
-    first_name: str
-    last_name: str
+    name: str
     email: EmailStr
+    roll_number: str  # <-- Make sure this is str, NOT EmailStr
+    mobile_number: str
     enrollment_date: date
-    batch_ids: Optional[List[int]] = []
 
 class StudentCreate(StudentBase):
     pass
@@ -17,11 +17,11 @@ class StudentUpdate(StudentBase):
 
 class StudentOut(BaseModel):
     id: int
-    first_name: str
-    last_name: str
+    name: str
     email: EmailStr
+    roll_number: int
+    mobile_number: int
     enrollment_date: date
-    batches: List[str] = []
 
     class Config:
         orm_mode = True

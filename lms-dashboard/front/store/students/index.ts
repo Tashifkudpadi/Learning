@@ -3,9 +3,11 @@ import axiosInstance from "@/utils/axios";
 
 interface Student {
   id: number;
-  user: { id: number; first_name: string; last_name: string; email: string };
-  primary_batch: { id: number; name: string } | null;
-  batches: { id: number; name: string }[];
+  name: string;
+  email: string;
+  roll_number: string;
+  mobile_number: number;
+  enrollment_date: string;
 }
 
 interface StudentState {
@@ -29,6 +31,9 @@ const studentSlice = createSlice({
     hasError(state, action) {
       state.error = action.payload;
     },
+    clearStudentError(state) {
+      state.error = "";
+    },
   },
 });
 
@@ -51,11 +56,11 @@ export const addStudent = createAsyncThunk(
   "students/addStudent",
   async (
     studentData: {
-      first_name: string;
-      last_name: string;
+      name: string;
       email: string;
-      password: string;
-      batch_id: number | null;
+      roll_number: string;
+      mobile_number: number;
+      enrollment_date: string;
     },
     { dispatch }
   ) => {
@@ -84,10 +89,11 @@ export const updateStudent = createAsyncThunk(
     }: {
       studentId: number;
       studentData: {
-        first_name?: string;
-        last_name?: string;
+        name?: string;
         email?: string;
-        batch_id?: number | null;
+        roll_number?: string;
+        mobile_number?: number;
+        enrollment_date?: string;
       };
     },
     { dispatch }
@@ -129,5 +135,6 @@ export const deleteStudent = createAsyncThunk(
   }
 );
 
-export const { setStudents, hasError } = studentSlice.actions;
+export const { setStudents, hasError, clearStudentError } =
+  studentSlice.actions;
 export default studentSlice.reducer;

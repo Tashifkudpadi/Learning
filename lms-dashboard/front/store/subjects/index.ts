@@ -5,10 +5,7 @@ interface Subject {
   id: number;
   name: string;
   code: string;
-  faculty: {
-    id: number;
-    user: { first_name: string; last_name: string };
-  } | null;
+  faculty_ids: number[];
 }
 
 interface SubjectState {
@@ -52,7 +49,7 @@ export const fetchSubjects = createAsyncThunk(
 export const addSubject = createAsyncThunk(
   "subjects/addSubject",
   async (
-    subjectData: { name: string; code: string; faculty_id: number | null },
+    subjectData: { name: string; code: string; faculty_ids: number[] },
     { dispatch }
   ) => {
     try {
@@ -79,7 +76,7 @@ export const updateSubject = createAsyncThunk(
       subjectData,
     }: {
       subjectId: number;
-      subjectData: { name?: string; code?: string; faculty_id?: number | null };
+      subjectData: { name?: string; code?: string; faculty_ids?: number[] };
     },
     { dispatch }
   ) => {

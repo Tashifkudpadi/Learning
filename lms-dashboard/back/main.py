@@ -1,12 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, users, students, subjects, batches, faculty
+from routers import auth, users, students, faculties, subjects
 from database import Base, engine
-from models.user import User, Role
-from models.student import Student
-from models.batch import Batch
-from models.faculty import Faculty
-from models.subject import Subject
+from models import faculty, subject, faculty_subject
 
 app = FastAPI(title="EduPlatform LMS API")
 
@@ -24,9 +20,10 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(students.router, prefix="/students", tags=["students"])
-app.include_router(batches.router, prefix="/batches", tags=["batches"])
-app.include_router(faculty.router, prefix="/faculty", tags=["faculty"])
-app.include_router(subjects.router, prefix="/subjects", tags=["subjects"])
+app.include_router(faculties.router, prefix="/faculties", tags=["faculties"])
+app.include_router(subjects.router, prefix="/subjects",
+                   tags=["subjects"])
+
 
 @app.get("/")
 async def root():
