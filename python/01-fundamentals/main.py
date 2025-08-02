@@ -1,3 +1,4 @@
+from enum import Enum
 import random
 
 # variables and functions
@@ -12,22 +13,22 @@ import random
 
 # 2
 def getChoices():
-  player_choice = input('Enter a choice (rock, paper, scissors):')
-  options = ['rock', 'paper', 'scissors']
-  colorOptions = [
-      'red',
-      'green',
-  ]
-  computer_choice = random.choice(options)
-  color_choice = random.choice(colorOptions)
+    player_choice = input('Enter a choice (rock, paper, scissors):')
+    options = ['rock', 'paper', 'scissors']
+    colorOptions = [
+        'red',
+        'green',
+    ]
+    computer_choice = random.choice(options)
+    color_choice = random.choice(colorOptions)
 
-  choices = {
-      "player": player_choice,
-      "computer": computer_choice,
-      "color": color_choice
-  }
+    choices = {
+        "player": player_choice,
+        "computer": computer_choice,
+        "color": color_choice
+    }
 
-  return choices
+    return choices
 
 
 # in python we can assign a same variable multiple times
@@ -82,7 +83,7 @@ print("food[0] aftr adding", food)
 cats = ['fluffy', 'whiskers', 1, 'felix', True, [1, 2, 3, 4, 5]]
 print("Cats", cats)
 
-print(cats[5][2])  #3
+print(cats[5][2])  # 3
 
 # cats[5][2] means:
 # cats[5] refers to the list at index 5:
@@ -94,31 +95,33 @@ cats.extend(['tommy', '5'])
 print(cats[6])
 print("cats", cats)
 
-numbers=[7,8,1,2,3,4,5]
+numbers = [7, 8, 1, 2, 3, 4, 5]
 # numbers.sort() #change the original array ascen
 # numbers.sort(reverse=True) #chang the original array for desc
 # print(numbers)
-ascending= sorted(numbers)
-descending= sorted(numbers, reverse=True)
-print(ascending,descending)
+ascending = sorted(numbers)
+descending = sorted(numbers, reverse=True)
+print(ascending, descending)
 
 # functions with arguments
-def check_win(player, computer):
-  print(f'You chose {player}, computer chose {computer}')
 
-  if player == computer:
-    return 'It is a tie!'
-  elif player == 'rock' and computer == 'scissors':
-    return 'Rock smashes scissors! Player wins!'
-  elif player == 'paper' and computer == 'rock':
-    return 'Paper covers rock! Player wins!'
-  elif player == 'scissors' and computer == 'paper':
-    return 'Scissors cuts paper! Player wins!'
-  else:
-    # print("You chose " + player + "computer chose " + computer)
-    # or with f strings
-    # print(f'You chose {player}, computer chose {computer}')
-    return 'Computer wins!'
+
+def check_win(player, computer):
+    print(f'You chose {player}, computer chose {computer}')
+
+    if player == computer:
+        return 'It is a tie!'
+    elif player == 'rock' and computer == 'scissors':
+        return 'Rock smashes scissors! Player wins!'
+    elif player == 'paper' and computer == 'rock':
+        return 'Paper covers rock! Player wins!'
+    elif player == 'scissors' and computer == 'paper':
+        return 'Scissors cuts paper! Player wins!'
+    else:
+        # print("You chose " + player + "computer chose " + computer)
+        # or with f strings
+        # print(f'You chose {player}, computer chose {computer}')
+        return 'Computer wins!'
 
 
 # or
@@ -188,9 +191,9 @@ age = 30
 print(isinstance(age, int))
 
 age = 2.9
-print(isinstance(age, float))  #checks decimal
+print(isinstance(age, float))  # checks decimal
 
-age = float(13)  #convert to float
+age = float(13)  # convert to float
 print(isinstance(age, float))
 
 age = int("20")
@@ -201,7 +204,7 @@ age = 8
 age += 1
 print(age)
 
-#comparison operators
+# comparison operators
 a = 1
 b = 2
 
@@ -211,34 +214,34 @@ b = 2
 # a>b#False
 
 # Boolean operators
-print(0 or 1)  #1
-print(False or 'hello')  #'hello'
-print('hello' or 'world')  #'hello'
-print([] or False)  #False bcz empty list is false
-print(False or [])  #[] bcz empty list is false
+print(0 or 1)  # 1
+print(False or 'hello')  # 'hello'
+print('hello' or 'world')  # 'hello'
+print([] or False)  # False bcz empty list is false
+print(False or [])  # [] bcz empty list is false
 
 # and operator only evaluates to true if both are true and or only evaluates to true if one is true
 # and only evaluate 2nd value if first is true and or only evaluate 2nd value if first is false
 
-print(0 and 1)  #0 bcz 0 is false
-print(1 and 0)  #0 bcz 0 is false
-print(False and 'hello')  #False bcz False is false
-print('hello' and 'world')  #'world' bcz 'hello' is true
-print([] and False)  #[] bcz empty list is false
-print(False and [])  #False bcz False is false
+print(0 and 1)  # 0 bcz 0 is false
+print(1 and 0)  # 0 bcz 0 is false
+print(False and 'hello')  # False bcz False is false
+print('hello' and 'world')  # 'world' bcz 'hello' is true
+print([] and False)  # [] bcz empty list is false
+print(False and [])  # False bcz False is false
 
 
 # ternary operator
 def is_adult(age):
-  if (age >= 18):
-    print("You are an adult")
-  else:
-    print("You are a child")
-  # or
+    if (age >= 18):
+        print("You are an adult")
+    else:
+        print("You are a child")
+    # or
 
 
 def is_adult2(age):
-  return True if age >= 18 else False
+    return True if age >= 18 else False
 
 
 # multi line string
@@ -276,20 +279,23 @@ print(len(name))
 print('au' in name)
 # All above methods does not change the original string
 
-def word_replacement():
-  name = "hello, beau"
-  word_to_replace=input('Enter a word to replace: ')
-  word_to_replace_with=input('Enter a word to replacement: ')
-  name = name.replace(word_to_replace, word_to_replace_with)
-  print("wordreplacemnet",name)
-word_replacement()  
 
-#miltiple values
+def word_replacement():
+    name = "hello, beau"
+    word_to_replace = input('Enter a word to replace: ')
+    word_to_replace_with = input('Enter a word to replacement: ')
+    name = name.replace(word_to_replace, word_to_replace_with)
+    print("wordreplacemnet", name)
+
+
+word_replacement()
+
+# miltiple values
 x, y, z = "Orange", "Banana", "Cherry"
 print(x)
 print(y)
 print(z)
-#unpacking
+# unpacking
 fruits = ["apple", "banana", "cherry"]
 x, y, z = fruits
 print(x)
@@ -299,44 +305,44 @@ print(z)
 # Escaping Characters
 name = "Beau"
 print("Be\nau")  # \n for new line
-print("Be\tau")  #\t for tab
-print("Be\\au")  #\\ for backslash
-print("Be\"au")  #\" for double quote
-print("\"Beau\"")  #\" for double quote
+print("Be\tau")  # \t for tab
+print("Be\\au")  # \\ for backslash
+print("Be\"au")  # \" for double quote
+print("\"Beau\"")  # \" for double quote
 # or
 print('"Beau"')
 
 # String Characters and Slicing
-print(name[1])  #e
-print(name[-1])  #u -1 is the last character
+print(name[1])  # e
+print(name[-1])  # u -1 is the last character
 print(
     name[1:2]
-)  #e 1 is the start index and 2 is the end index (a character before the end index)
+)  # e 1 is the start index and 2 is the end index (a character before the end index)
 name = "Beau is cool"
-print(name[1:7])  #eau is
-print(name[1:])  #eau is cool
-print(name[:7])  #Beau is
-print(name[1:7:2])  #eu i 2 is the step
+print(name[1:7])  # eau is
+print(name[1:])  # eau is cool
+print(name[:7])  # Beau is
+print(name[1:7:2])  # eu i 2 is the step
 
 print('----------------------BOOLEANS-----------------------')
 
 done = True
 if (done):
-  print("Yes")
+    print("Yes")
 else:
-  print("No")
+    print("No")
 
 done = 0  # 0 is false and 1 or other any integers are true
 if (done):
-  print("Yes")
+    print("Yes")
 else:
-  print("No")
+    print("No")
 
 done = ""  # empty string is false and any string is true
 if (done):
-  print("Yes")
+    print("Yes")
 else:
-  print("No")
+    print("No")
 
 print(type(done) == bool)
 print(isinstance(done, bool))
@@ -363,20 +369,19 @@ print(num1.real, num1.imag)
 print(num2.real, num2.imag)
 
 # Build in Functions
-print(abs(-5.5))  #5.5
+print(abs(-5.5))  # 5.5
 # abs will return absulute value of a number
-print(round(5.5))  #6
-print(round(5.4))  #5
-print(round(5.49))  #5
-print(round(5.49, 1))  #5.5
+print(round(5.5))  # 6
+print(round(5.4))  # 5
+print(round(5.49))  # 5
+print(round(5.49, 1))  # 5.5
 
 print('------------------------ENUMS-------------------------')
-from enum import Enum
 
 
 class State(Enum):
-  Inactive = 0
-  Active = 1
+    Inactive = 0
+    Active = 1
 
 
 print(State.Active)
@@ -384,10 +389,10 @@ print(State.Active.value)
 # or
 print(State['Inactive'])
 print(State['Inactive'].value)
-print(State(1))  #Active
+print(State(1))  # Active
 
-print(list(State))  #[<State.Inactive: 0>, <State.Active: 1>]
-print(len(State))  #2
+print(list(State))  # [<State.Inactive: 0>, <State.Active: 1>]
+print(len(State))  # 2
 
 # Tuples
 print('------------------------TUPPLES-------------------------')
@@ -412,11 +417,11 @@ print(dog["name"])
 # or
 print(dog.get("name"))
 
-print(dog.get('color', 'brown'))  #default value is brown
-print(dog.pop("name"))  #remove name from dog
+print(dog.get('color', 'brown'))  # default value is brown
+print(dog.pop("name"))  # remove name from dog
 print(dog)
 
-print(dog.popitem())  #remove last item from dog
+print(dog.popitem())  # remove last item from dog
 print("color" in dog)
 print(dog.keys())
 print(list(dog.keys()))
@@ -430,7 +435,7 @@ print(len(dog))
 print(dog.items())
 print(list(dog.items()))
 
-#delete dog.color
+# delete dog.color
 del dog["favorite food"]
 print(dog)
 
@@ -439,9 +444,9 @@ set1 = {'Faizan', 'Tashif', 'Chetan'}
 set2 = {'Faizan'}
 intersection = set1 & set2
 print(intersection)
-#set is not going to have duplicate values
+# set is not going to have duplicate values
 set3 = {'Faizan', 'Tashif', 'Chetan', 'Faizan'}
-print(set3)  #{'Faizan', 'Tashif', 'Chetan'}
+print(set3)  # {'Faizan', 'Tashif', 'Chetan'}
 
 print('------------------------UNION-------------------------')
 set1 = {'Faizan', 'Tashif', 'Chetan'}
@@ -449,12 +454,16 @@ set2 = {'Faizan'}
 union = set1 | set2
 print(union)
 
-difference = set1 - set2
-print(difference)
+# difference = set1 - set2
+# print(difference)
+
+print(set1 | set2)  # union
+print(set1 & set2)  # intersection
+print(set1 - set2)  # difference
 
 print('------------------------Superset-------------------------')
 
-#set is a superset of set2
+# set is a superset of set2
 mod = set1 > set2
 print(mod)
 # The > operator checks if set1 is a proper superset of set2.
@@ -464,7 +473,7 @@ print(mod)
 # Since set1 has Faizan and more elements, this is True.
 
 print('------------------------SUBSET-------------------------')
-#set is a subset of set2
+# set is a subset of set2
 # The < operator checks if set1 is a proper subset of set2.
 # Means: "Are all elements of set1 inside set2, and is set1 smaller?"
 # set1 = Faizan, Tashif, Chetan
@@ -489,4 +498,3 @@ print(fruits)
 # Output: {'apple', 'cherry'}
 
 fruits.discard("mango")  # No error even though "mango" isn't present
-
