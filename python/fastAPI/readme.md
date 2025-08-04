@@ -37,3 +37,143 @@ touch main.py
 # fourth step is to run the fastAPI.
 
 uvicorn main:app --reload
+
+<!------------------------- sql commands ------------------------->
+
+<!-- create database -->
+
+CREATE DATABASE fastapi_db;
+
+<!-- create table -->
+
+CREATE TABLE products (
+id SERIAL PRIMARY KEY,
+name VARCHAR(100) NOT NULL,
+price DECIMAL(10, 2) NOT NULL,
+inventory INT NOT NULL,
+is_sale BOOLEAN NOT NULL
+);
+
+<!-- insert data -->
+
+INSERT INTO products (name, price, inventory, is_sale)
+VALUES ('Product 1', 10.99, 10, true);
+
+<!-- insert multiple data -->
+
+INSERT INTO products (name, price, inventory, is_sale)
+VALUES ('Product 2', 15.99, 20, false),
+('Product 3', 20.99, 30, true) RETURNING \*; <!-- RETURNING asterick will return the inserted data with all the columns -->
+
+<!-- update data -->
+
+UPDATE products SET name = 'TV Black' WHERE id = 1 RETURNING \*; <!-- RETURNING asterick will return the updated data with all the columns -->
+
+UPDATE products SET name = 'TV Black', price = 25.99 WHERE id = 1 RETURNING \*; <!-- RETURNING asterick will return the updated data with all the columns -->
+
+UPDATE products SET is_sale = true WHERE id >10 RETURNING \*; <!-- RETURNING asterick will return the updated data with all the columns -->
+
+<!-- delete data -->
+
+DELETE FROM products WHERE id = 1;
+DELETE FROM products WHERE id = 1 RETURNING \*; <!-- RETURNING asterick will return the deleted data with all the columns -->
+
+<!-- delete multiple rows -->
+
+DELETE FROM products WHERE id IN (1,2,3);
+DELETE FROM products WHERE id IN (1,2,3) RETURNING \*; <!-- RETURNING asterick will return the deleted data with all the columns -->
+
+<!-- drop table -->
+
+DROP TABLE products;
+
+<!-- drop database -->
+
+DROP DATABASE fastapi_db;
+
+<!-- show all databases -->
+
+SHOW DATABASES;
+
+<!-- select or show data -->
+
+SELECT \* FROM products; <!-- * mark is used to select all columns -->
+SELECT name, price FROM products; <!-- select only name and price columns -->
+
+<!-- rename column -->
+
+select id as product_id FROM products; <!-- Temp -->
+ALTER TABLE products RENAME COLUMN id TO product_id; <!-- Permanent -->
+
+<!-- to get name that start with "TV" and % means any character after TV -->
+
+SELECT \* from products WHERE name LIKE 'TV%';
+
+<!-- for example:  TV, TV Yellow, TV Blue, TV Red -->
+
+<!-- to get name that end with "TV" and % means any character before TV -->
+
+SELECT \* from products WHERE name LIKE '%TV';
+
+<!-- to get name that contain "TV" and % means any character before and after TV -->
+
+SELECT \* from products WHERE name LIKE '%TV%'; <!-- in between TV -->
+SELECT \* from products WHERE name LIKE '%TV'; <!-- before TV -->
+
+<!-- to make it Opposite use NOT LIKE opertaor -->
+
+SELECT \* from products WHERE name NOT LIKE '%TV';
+
+<!-- show one row with conditions -->
+
+SELECT \* FROM products WHERE id = 10;
+SELECT \* FROM products WHERE name = 'computer';
+
+<!-- show all rows with conditions -->
+
+SELECT \* FROM products WHERE price >= 10;
+SELECT _ FROM products WHERE inventory != 0 AND price >10;
+SELECT _ FROM products WHERE inventory > 0 AND price >10 OR price <100;
+SELECT \* FROM products WHERE inventory > 0 AND (price >10 OR price <100);
+SELECT \* from products WHERE id = 1 OR id = 2 OR id = 3;
+
+<!-- or -->
+
+SELECT \* from products WHERE id IN (1,2,3);
+
+<!-- show all rows with conditions and limit -->
+
+SELECT \* FROM products WHERE price > 10 LIMIT 1;
+
+<!-- show all rows with conditions and order -->
+
+SELECT \* FROM products WHERE price > 10 ORDER BY price DESC;
+SELECT \* from products ORDER BY inventory DESC, price; <!-- first inventory then price (by default ascending) -->
+
+<!-- to get recent data  -->
+
+SELECT \* from products ORDER BY created_at DESC;
+
+<!-- show all rows with conditions and order and limit -->
+
+SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1;
+
+<!-- show all rows with conditions and order and limit and offset -->
+
+SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1;
+
+<!-- show all rows with conditions and order and limit and offset and where -->
+
+SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1 WHERE inventory > 10;
+
+<!-- show all rows with conditions and order and limit and offset and where and group by -->
+
+SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1 WHERE inventory > 10 GROUP BY name;
+
+<!-- show all rows with conditions and order and limit and offset and where and group by and having -->
+
+SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1 WHERE inventory > 10 GROUP BY name HAVING inventory > 10;
+
+<!-- show all rows with conditions and order and limit and offset and where and group by and having and join -->
+
+SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1 WHERE inventory > 10 GROUP BY name HAVING inventory > 10 JOIN orders ON products.id = orders.product_id;
