@@ -7,7 +7,11 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from sqlalchemy.orm import Session
 from .database import engine, get_db
-from . import models, schemas
+from . import models, schemas, utils
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(
+    schemes=["bcrypt"], default="bcrypt", deprecated="auto")
 
 app = FastAPI()
 
@@ -118,13 +122,17 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
     if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} was not found")
-    post_query.update(updated_post.dict(), synchronize_session=False)
+    post_query.update(updated_post.model_dump(), synchronize_session=False)
     db.commit()
     return post_query.first()
 
 
-@app.post('/users', status_code=status.HTTP_201_CREATED)
+@app.post('/users', status_code=status.HTTP_201_CREATED, response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # hash the password which can be retrieved from user.password
+    hashed_password = utils.hash(user.password)
+    user.password = hashed_password
+
     new_user = models.Users(**user.model_dump())
     db.add(new_user)
     db.commit()

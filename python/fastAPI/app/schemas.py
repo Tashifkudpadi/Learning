@@ -34,13 +34,11 @@ class PostBase(BaseModel):
     published: bool = True  # optional field
 
 
-class PostCreate(PostBase):
+class PostCreate(PostBase):     # (post req)
     pass
 
-# this is for response post
 
-
-class Post(PostBase):
+class Post(PostBase):  # (get req)response
     id: int
     created_at: datetime
 
@@ -49,12 +47,15 @@ class Post(PostBase):
 
 
 # ------------------------- Users Schema ----------------------
-class UserCreate(BaseModel):
+class UserCreate(BaseModel):  # this is for creating user
     email: EmailStr
     password: str
 
 
-class UserResponse(BaseModel):
+class UserResponse(BaseModel):  # this is for response user (get req)
     id: int
     email: EmailStr
     created_at: datetime
+
+    class Config:
+        orm_mode = True

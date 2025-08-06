@@ -183,3 +183,9 @@ SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1 WH
 <!-- show all rows with conditions and order and limit and offset and where and group by and having and join -->
 
 SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1 WHERE inventory > 10 GROUP BY name HAVING inventory > 10 JOIN orders ON products.id = orders.product_id;
+
+<!-- ------------------------Hashing password----------------- -->
+
+<!-- to hash the password we can use passlib library -->
+
+pip install "passlib[bcrypt]"
