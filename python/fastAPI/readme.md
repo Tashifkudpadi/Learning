@@ -38,6 +38,12 @@ touch main.py
 
 uvicorn main:app --reload
 
+<!-- later steps -->
+
+pip install sqlalchemy <!-- sqlalchemy is a SQL toolkit and Object-Relational Mapping (ORM) library for Python -->
+pip install psycopg2 <!-- psycopg2 is a PostgreSQL database adapter for Python, with this we can connect to the PostgreSQL database, this is a dependency of sqlalchemy without this we can't connect to the database. This is basically driver for PostgreSQL database. -->
+pip install python-dotenv <!-- python-dotenv is a Python library that loads environment variables from a .env file -->
+
 <!------------------------- sql commands ------------------------->
 
 <!-- create database -->

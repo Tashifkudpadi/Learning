@@ -1,16 +1,30 @@
 from random import randrange
-from typing import Optional
-from fastapi import Body, FastAPI, HTTPException, Response, status
+import time
+from typing import List, Optional
+from fastapi import Body, Depends, FastAPI, HTTPException, Response, status
 from pydantic import BaseModel
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from sqlalchemy.orm import Session
+from .database import engine, get_db
+from . import models, schemas
 
 app = FastAPI()
 
+models.Base.metadata.create_all(bind=engine)
 
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True  # optional field
-    rating: Optional[int] = None
+
+while True:
+    try:
+        connection = psycopg2.connect(host="localhost", database="fastapi",
+                                      user="postgres", password="Theta$999", cursor_factory=RealDictCursor)
+        cursor = connection.cursor()
+        print("Database connection successful")
+        break
+    except Exception as error:
+        print("Failed to connect to database")
+        print("Error: ", error)
+        time.sleep(2)
 
 
 my_posts = [{"id": 1, "title": "title of post 1", "content": "content of post 1"}, {
@@ -22,43 +36,57 @@ def root():
     return {"message": "Hello World"}
 
 
-@app.get("/posts")
-def get_posts():
-    return {"data": my_posts}
+@app.get("/posts", response_model=List[schemas.Post])
+def get_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    return posts
 
 
-@app.post('/posts', status_code=status.HTTP_201_CREATED)
-# remove response in the function parameter if using HTTPException or status.HTTP_201_CREATED in decorator
-def create_posts(new_post: Post, response: Response):
+@app.post('/posts', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
+def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db)):
+    # handle by sql
+    # cursor.execute(
+    #     """INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
+    #     (new_post.title, new_post.content, new_post.published)
+    # )
+    # post_created = cursor.fetchone()  # This will be a dict (from RealDictCursor)
+    # connection.commit()
 
-    post_dict = new_post.dict()
-    post_dict["id"] = randrange(0, 10000)
-    my_posts.append(post_dict)
-    # response.status_code = status.HTTP_201_CREATED
-    return {"data": post_dict}
+    # handle by orm or sqlalchemy both are same
+    # post_created = models.Post(
+    #     title=new_post.title, content=new_post.content, published=new_post.published)
+    # or
+    # this is the best way to do it. unpacking the dict if there are many fields
+    post_created = models.Post(**new_post.dict())
+    db.add(post_created)
+    db.commit()
+    db.refresh(post_created)
+
+    return post_created
+# %s is a placeholder for string and it will be replaced by the values in the tuple also it will not allow sql injection or commands if users inputs the values
 
 
-@app.get('/posts/latest')
-def get_latest_post():
-    return {"post_detail": my_posts[-1]}
+@app.get('/posts/latest', response_model=schemas.Post)
+def get_latest_post(db: Session = Depends(get_db)):
+    # cursor.execute("""SELECT * FROM posts ORDER BY created_at DESC LIMIT 1""")
+    # post = cursor.fetchone()
+    # connection.commit()
+    post = db.query(models.Post).order_by(
+        models.Post.created_at.desc()).first()
+    return post
 
 
-def find_post(id: int):
-    for post in my_posts:
-        if post['id'] == id:
-            return post
-
-
-@app.get('/posts/{id}')  # {id} field represent a path parameter
-def get_post(id: int, response: Response):  # remove response if using HTTPException
-    post = find_post(id)
+# {id} field represent a path parameter # this is a string
+@app.get('/posts/{id}', response_model=schemas.Post)
+def get_post(id: int, db: Session = Depends(get_db)):
+    # cursor.execute("""SELECT * FROM posts WHERE id = %s""",
+    #                (str(id)))  # convert id to string again
+    # post = cursor.fetchone()
+    post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
-        # response.status_code = status.HTTP_404_NOT_FOUND
-        # return {"message": f"post not {id} found"}
-        # or
-        raise HTTPException(
-            status_code=404, detail=f"post with id: {id} was not found")
-    return {"post_detail": post}
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"post with id: {id} was not found")
+    return post
 
 
 # this can behave "latest" as an id and will throw the error bcz "latest" is not an integer. so the solution can be move it before id function
@@ -73,37 +101,47 @@ def find_index_post(id: int):
 
 
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
-    index = find_index_post(id)
-    if index == None:
-        raise HTTPException(
-            status_code=404, detail=f"post with id: {id} was not found")
-    my_posts.pop(index)
-    # fastapi doesnt accept any data in the response when the status code is 204 so we use Response. if we sent it willthrow an error called too much data for content length
-    # optional line below
+def delete_post(id: int, db: Session = Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == id)
+    if post.first() is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"post with id: {id} was not found")
+    post.delete(synchronize_session=False)
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-# or
+
+@app.put('/posts/{id}', response_model=schemas.Post)
+def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    post = post_query.first()
+    if post == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"post with id: {id} was not found")
+    post_query.update(updated_post.dict(), synchronize_session=False)
+    db.commit()
+    return post_query.first()
 
 
-# @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
-# def delete_post(id: int, response: Response):
-#     post = find_post(id)
-#     if not post:
-#         response.status_code = status.HTTP_404_NOT_FOUND
-#         return {"message": f"post not {id} found"}
-#     my_posts.remove(post)
-#     # fastapi doesnt accept any data in the response when the status code is 204 so we use Response. if we sent it willthrow an error called too much data for content length
-#     return Response(status_code=status.HTTP_204_NO_CONTENT)
+@app.post('/users', status_code=status.HTTP_201_CREATED)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    new_user = models.Users(**user.model_dump())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
-# update
 
-@app.put('/posts/{id}')
-def update_post(id: int):
-    for post in my_posts:
-        if post['id'] == id:
-            post['title'] = 'new title updated'
-            post['content'] = 'new content updated'
-            return {"message": "post updated successfully", "post": post}
-    raise HTTPException(
-        status_code=404, detail=f"post with id: {id} was not found")
+@app.get('/users/{id}', response_model=schemas.UserResponse)
+def get_user(id: int, db: Session = Depends(get_db)):
+    user = db.query(models.Users).filter(models.Users.id == id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"user with id: {id} was not found")
+    return user
+
+
+@app.get('/users', response_model=List[schemas.UserResponse])
+def get_users(db: Session = Depends(get_db)):
+    users = db.query(models.Users).all()
+    return users
