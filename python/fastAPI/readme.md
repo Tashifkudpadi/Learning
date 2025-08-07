@@ -189,3 +189,28 @@ SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1 WH
 <!-- to hash the password we can use passlib library -->
 
 pip install "passlib[bcrypt]"
+passlib is a password hashing library for Python, it provides a simple interface to hash and verify passwords. and bcrypt is a password hashing function that is used to hash the password. bcrypt is a dependency of passlib.
+
+<!-- JWT Token Authentication  -->
+
+when the user sends credential to login (username+password). fastAPI will verify the credential with the database. if the credential is correct, fastAPI will generate a JWT token and send it back to the user. the user will use this token to authenticate with the API
+which means user can access its posts by sending the JWT token in the header of the request.
+then fastapi will verify the token and if it is correct, it will return the posts of the user.
+
+ex: /posts with JWT token in the header
+
+the token is created with 3 Individual pieces: header (includes metadata of the token), payload (data, sending any data to the user no confidential data), and signature (a secret key that is used to verify the token or combine the header and payload + secret key)
+
+<!-- login user with username and password and return a JWT token -->
+
+first user sends a mail and password to the server. then the raw password is converted to hashed password using bcrypt. then the hashed password is compared with the hashed password in the database. if the hashed password is correct, the user is logged in and a JWT token is generated.
+
+the JWT token is sent back to the user. the user will use this token to authenticate with the API.
+the user can access its posts by sending the JWT token in the header of the request.
+
+<!-- to create a JWT token we can use python-jose library -->
+
+pip install "python-jose[cryptography]"
+python-jose is a Python implementation of the JSON Web Token (JWT) standard. it provides a simple interface to create and verify JWT tokens. and cryptography is a dependency of python-jose.
+
+<!-- see the oauth2.py file for more details -->

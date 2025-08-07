@@ -59,3 +59,12 @@ class UserResponse(BaseModel):  # this is for response user (get req)
 
     class Config:
         orm_mode = True
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+    class Token(BaseModel):
+        access_token: str
+        token_type: str
