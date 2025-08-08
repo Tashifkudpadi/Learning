@@ -17,7 +17,7 @@ def get_posts(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
+def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     # handle by sql
     # cursor.execute(
     #     """INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
@@ -31,7 +31,8 @@ def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db), us
     #     title=new_post.title, content=new_post.content, published=new_post.published)
     # or
     # this is the best way to do it. unpacking the dict if there are many fields
-    post_created = models.Post(**new_post.dict())
+    post_created = models.Post(
+        owner_id=current_user.id, **new_post.model_dump())
     db.add(post_created)
     db.commit()
     db.refresh(post_created)
@@ -69,6 +70,9 @@ def delete_post(id: int, db: Session = Depends(get_db), current_user: int = Depe
     if post.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} was not found")
+    if post.first().owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Not authorized to perform requested action")
     post.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -81,6 +85,9 @@ def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends
     if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"post with id: {id} was not found")
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Not authorized to perform requested action")
     post_query.update(updated_post.model_dump(), synchronize_session=False)
     db.commit()
     return post_query.first()

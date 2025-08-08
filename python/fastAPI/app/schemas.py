@@ -39,9 +39,20 @@ class PostCreate(PostBase):     # (post req)
     pass
 
 
+class UserResponse(BaseModel):  # this is for response user (get req)
+    id: int
+    email: EmailStr
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
 class Post(PostBase):  # (get req)response
     id: int
     created_at: datetime
+    owner_id: int
+    owner: UserResponse
 
     class Config:
         orm_mode = True  # this will allow pydantic to read the data from the database. without this we can't get the data from the database.if not added, then this is just sqlalchemy thing without class Config.
@@ -51,15 +62,6 @@ class Post(PostBase):  # (get req)response
 class UserCreate(BaseModel):  # this is for creating user
     email: EmailStr
     password: str
-
-
-class UserResponse(BaseModel):  # this is for response user (get req)
-    id: int
-    email: EmailStr
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
 
 
 class UserLogin(BaseModel):
