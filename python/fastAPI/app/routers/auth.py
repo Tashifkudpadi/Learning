@@ -1,18 +1,27 @@
 from fastapi import APIRouter, status, HTTPException, Depends, Response
+from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+from sqlalchemy import util
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models, schemas, utils, oauth2
 
+
 router = APIRouter(tags=["auth"])
 
 
-@router.post('/login', status_code=status.HTTP_200_OK)
-async def login(user_cred: schemas.UserLogin, db: Session = Depends(get_db)):
-    user_db = db.query(models.Users).filter(
-        models.Users.email == user_cred.email).first()
-    if not user_db or not utils.verify(user_cred.password, user_db.password):
+@router.post('/login', response_model=schemas.Token)
+def login(user_cred: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # fastapi security has username and password only not email and in postman we can't send email and password we have to send username and password in the form data
+    user = db.query(models.Users).filter(
+        models.Users.email == user_cred.username).first()
+    if not user:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid credentials")
+            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid Credentials")
 
-    create_token = oauth2.create_access_token(data={"user_id": user_db.id})
-    return {"access_token": create_token, "token_type": "bearer"}
+    check_verify = utils.verify(user_cred.password, user.password)
+    if not check_verify:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Invalid Credentials")
+
+    access_token = oauth2.create_access_token(data={"user_id": str(user.id)})
+    return {"access_token": access_token, "token_type": "bearer"}

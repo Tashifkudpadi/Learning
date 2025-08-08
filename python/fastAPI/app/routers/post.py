@@ -1,4 +1,4 @@
-from .. import models, schemas, utils
+from .. import models, schemas, utils, oauth2
 from ..database import get_db
 from fastapi import Depends, HTTPException, Response, status, APIRouter
 from sqlalchemy.orm import Session
@@ -17,7 +17,7 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db)):
+def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
     # handle by sql
     # cursor.execute(
     #     """INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""",
@@ -31,6 +31,7 @@ def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db)):
     #     title=new_post.title, content=new_post.content, published=new_post.published)
     # or
     # this is the best way to do it. unpacking the dict if there are many fields
+    print("user_id:", user_id)
     post_created = models.Post(**new_post.dict())
     db.add(post_created)
     db.commit()

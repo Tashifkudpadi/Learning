@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 #  ------------------------------------version 1-----------------------
@@ -68,3 +69,12 @@ class UserLogin(BaseModel):
     class Token(BaseModel):
         access_token: str
         token_type: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    id: Optional[str] = None
