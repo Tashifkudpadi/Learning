@@ -11,7 +11,7 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[schemas.Post])
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     posts = db.query(models.Post).all()
     return posts
 
@@ -31,7 +31,6 @@ def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db), us
     #     title=new_post.title, content=new_post.content, published=new_post.published)
     # or
     # this is the best way to do it. unpacking the dict if there are many fields
-    print("user_id:", user_id)
     post_created = models.Post(**new_post.dict())
     db.add(post_created)
     db.commit()
@@ -42,7 +41,7 @@ def create_posts(new_post: schemas.PostCreate, db: Session = Depends(get_db), us
 
 
 @router.get('/latest', response_model=schemas.Post)
-def get_latest_post(db: Session = Depends(get_db)):
+def get_latest_post(db: Session = Depends(get_db),  current_user: int = Depends(oauth2.get_current_user)):
     # cursor.execute("""SELECT * FROM posts ORDER BY created_at DESC LIMIT 1""")
     # post = cursor.fetchone()
     # connection.commit()
@@ -53,7 +52,7 @@ def get_latest_post(db: Session = Depends(get_db)):
 
 # {id} field represent a path parameter # this is a string
 @router.get('/{id}', response_model=schemas.Post)
-def get_post(id: int, db: Session = Depends(get_db)):
+def get_post(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     # cursor.execute("""SELECT * FROM posts WHERE id = %s""",
     #                (str(id)))  # convert id to string again
     # post = cursor.fetchone()
@@ -65,7 +64,7 @@ def get_post(id: int, db: Session = Depends(get_db)):
 
 
 @router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, db: Session = Depends(get_db)):
+def delete_post(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     post = db.query(models.Post).filter(models.Post.id == id)
     if post.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -76,7 +75,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 
 @router.put('/{id}', response_model=schemas.Post)
-def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db)):
+def update_post(id: int, updated_post: schemas.PostCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
     if post == None:

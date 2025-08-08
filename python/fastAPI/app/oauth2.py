@@ -40,7 +40,7 @@ def verify_access_token(token: str, credentials_exception):
 
     try:
 
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
         # passed user_id in the token when creating the token during login and here we are getting it back
         id: str = payload.get("user_id")
         if id is None:
