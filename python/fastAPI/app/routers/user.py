@@ -42,3 +42,17 @@ def get_user(id: int, db: Session = Depends(get_db)):
 def get_users(db: Session = Depends(get_db)):
     users = db.query(models.Users).all()
     return users
+
+
+@router.put('/{id}', response_model=schemas.UserResponse)
+def update_user(id: int, user: schemas.UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(models.Users).filter(
+        models.Users.id == id).first()
+    if not existing_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"user with id: {id} was not found")
+    existing_user.email = user.email
+    existing_user.password = utils.hash(user.password)
+    db.commit()
+    db.refresh(existing_user)
+    return existing_user

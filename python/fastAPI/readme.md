@@ -184,6 +184,34 @@ SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1 WH
 
 SELECT \* FROM products WHERE price > 10 ORDER BY price DESC LIMIT 1 OFFSET 1 WHERE inventory > 10 GROUP BY name HAVING inventory > 10 JOIN orders ON products.id = orders.product_id;
 
+<!-- to get the all the data from the 2 tables -->
+
+SELECT posts.\* FROM posts LEFT JOIN users ON posts.owner_id = users.id;
+
+<!-- to get the specific data from the 2 tables -->
+
+SELECT title,content,email FROM posts LEFT JOIN users ON posts.owner_id=users.id;
+
+<!-- if you want to get the specific data which includes the same name column for ex: id column from the 2 tables and both has id column it will through an ambiguous error -->
+
+<!-- SELECT id,content,email FROM posts LEFT JOIN users ON posts.owner_id=users.id; -->
+<!-- to solve this problem you can use the table name before the column name like this -->
+
+SELECT posts.id,content,email FROM posts LEFT JOIN users ON posts.owner_id=users.id;
+
+<!-- to get all the data from the 1 table and any specifuc data from the 2 table  -->
+<!-- you can use the following syntax -->
+
+SELECT posts.\*,users.email FROM posts LEFT JOIN users ON posts.owner_id = users.id;
+
+<!-- to get the count of the posts for each user -->
+
+select users.id, users.email, COUNT(posts.id) as users_post_count from posts RIGHT JOIN users ON posts.owner_id = users.id group by users.id;
+
+<!-- get all the posts with likes -->
+
+select posts.\*, COUNT(posts.id) as users_post_count from posts LEFT JOIN votes ON posts.id = votes.post_id group by posts.id;
+
 <!-- ------------------------Hashing password----------------- -->
 
 <!-- to hash the password we can use passlib library -->

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr
+from pydantic.types import conint
 
 #  ------------------------------------version 1-----------------------
 # class Post(BaseModel):
@@ -48,7 +49,7 @@ class UserResponse(BaseModel):  # this is for response user (get req)
         orm_mode = True
 
 
-class Post(PostBase):  # (get req)response
+class Post(PostBase):  # this is the response
     id: int
     created_at: datetime
     owner_id: int
@@ -59,24 +60,26 @@ class Post(PostBase):  # (get req)response
 
 
 # ------------------------- Users Schema ----------------------
-class UserCreate(BaseModel):  # this is for creating user
+class UserCreate(BaseModel):  # this is for creating user, to verify users inputs
     email: EmailStr
     password: str
 
 
-class UserLogin(BaseModel):
+class UserLogin(BaseModel):  # this is for login user, to verify users inputs
     email: EmailStr
     password: str
 
-    class Token(BaseModel):
-        access_token: str
-        token_type: str
 
-
-class Token(BaseModel):
+class Token(BaseModel):  # once user is logged in, this is the response
     access_token: str
     token_type: str
 
 
-class TokenData(BaseModel):
+class TokenData(BaseModel):  # to verify the access token in oauth2 files
     id: Optional[str] = None
+
+
+class Vote(BaseModel):
+    post_id: int
+    # dir is either 1 or -1. ge=1 means greater than or equal to 1. le=1 means less than or equal to 1.
+    dir: conint(le=1)
