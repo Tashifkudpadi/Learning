@@ -242,3 +242,55 @@ pip install "python-jose[cryptography]"
 python-jose is a Python implementation of the JSON Web Token (JWT) standard. it provides a simple interface to create and verify JWT tokens. and cryptography is a dependency of python-jose.
 
 <!-- see the oauth2.py file for more details -->
+
+<!------------------------ Alembic ------------------------>
+
+alembic is a database migration tool for SQLAlchemy. it provides a simple interface to create and apply database migrations. it is a dependency of sqlalchemy.
+
+<!-- Alembic setup -->
+
+pip install alembic
+alembic init alembic
+
+<!-- then go to the alembic folder > env.py file and change the path of the database to the path of the database in the project. which is this target_metadata = Base.metadata -->
+
+<!-- then go the alembic.ini file change it from sqlalchemy.url = driver://user:pass@localhost/dbname to sqlalchemy.url = postgresql+psycopg2://yourusername:yourpassword@localhost:5432/yourdbname -->
+
+<!-- or go to the alembic folder > env.py file and add
+config.set_main_option(
+    'sqlalchemy.url', 'postgresql+psycopg2://yourusername:yourpassword@localhost:5432/yourdbname') -->
+
+<!-- we can leave sqlalchemy.url = empty in the alembic.ini file -->
+<!-- then import app.config settings change it to 'sqlalchemy.url', f'postgresql+psycopg2://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}')
+ -->
+
+ <!-- docs link -->
+ <!-- https://alembic.sqlalchemy.org/en/latest/api/ddl.html -->
+
+alembic revision -m "create posts table" <!-- this will create a new migration file under the alembic folder > versions folder -->
+
+<!-- to see help -->
+
+alembic --help
+alembic upgrade --help <!-- drilling down-->
+alembic upgrade 7b85f6fb21c7 <!-- this will apply the migration -->
+
+<!-- to see current revision -->
+
+alembic current <!-- this will show the last applied revision -->
+
+<!-- to add more columns -->
+
+alembic revision -m "add content column to posts table" <!-- this will create a new migration file under the alembic folder > versions folder -->
+
+<!-- to see latest revision  -->
+
+alembic head <!--this will show newly created revision id-->
+
+<!-- to make the migration  -->
+
+alembic upgrade head <!-- this will apply the migration -->
+
+<!-- to remove the content column -->
+
+alembic downgrade -1 <!-- this will undo the last migration -2 to undo the second last migration -->

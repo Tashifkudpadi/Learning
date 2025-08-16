@@ -86,25 +86,6 @@ async def update_user(user_id: int, user_update: UserUpdate, db: Session = Depen
         if user_update.role not in [role.value for role in Role]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
-        # if user_update.role != user.role.value:
-        #     if user_update.role == "student":
-        #         if not db.query(Student).filter(Student.user_id == user_id).first():
-        #             batch = db.query(Batch).first()
-        #             if not batch:
-        #                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No batches available")
-        #             db.add(Student(user_id=user_id, batch_id=batch.id))
-        #     elif user_update.role == "faculty":
-        #         if not db.query(Faculty).filter(Faculty.user_id == user_id).first():
-        #             db.add(Faculty(user_id=user_id))
-        #     if user.role == Role.STUDENT:
-        #         student = db.query(Student).filter(Student.user_id == user_id).first()
-        #         if student:
-        #             db.delete(student)
-        #     elif user.role == Role.FACULTY:
-        #         faculty = db.query(Faculty).filter(Faculty.user_id == user_id).first()
-        #         if faculty:
-        #             db.delete(faculty)
-        # user.role = Role(user_update.role)
 
     db.commit()
     db.refresh(user)

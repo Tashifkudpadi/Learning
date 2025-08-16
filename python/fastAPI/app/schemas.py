@@ -59,6 +59,14 @@ class Post(PostBase):  # this is the response
         orm_mode = True  # this will allow pydantic to read the data from the database. without this we can't get the data from the database.if not added, then this is just sqlalchemy thing without class Config.
 
 
+class PostOut(BaseModel):
+    Post: Post  # Capital P matches the alias used in query tuple
+    votes: int
+
+    class Config:
+        orm_mode = True
+
+
 # ------------------------- Users Schema ----------------------
 class UserCreate(BaseModel):  # this is for creating user, to verify users inputs
     email: EmailStr
