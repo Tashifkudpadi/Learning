@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
 import DashboardSidebar from "@/components/dashboard-sidebar";
 import type { UserRole } from "@/types/user";
 
@@ -12,7 +11,6 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [userRole, setUserRole] = useState<UserRole>("admin");
-  const pathname = usePathname();
 
   // For demo purposes, allow changing roles
   useEffect(() => {

@@ -35,13 +35,18 @@ import {
   Award,
   TrendingUp,
 } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { authAction } from "@/store/auth";
 
 export default function AuthForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string>(""); // Add state for role
+  const dispatch = useAppDispatch();
+  const { loading, error } = useAppSelector((state) => state.auth);
+
   const router = useRouter();
 
   async function onSubmit(
@@ -49,13 +54,11 @@ export default function AuthForm() {
     type: "signin" | "signup"
   ) {
     event.preventDefault();
-    setIsLoading(true);
-    setError(null);
 
     const formData = new FormData(event.currentTarget);
     const data: any = {
       email: formData.get(`${type}-email`) as string,
-      role: role, // Use controlled role state
+      role: role,
     };
 
     if (type === "signup") {
@@ -67,34 +70,10 @@ export default function AuthForm() {
       data.password = formData.get("signin-password") as string;
     }
 
-    console.log("Form data:", data); // Debug: Log the data object
+    const result = await dispatch(authAction({ data, type }));
 
-    try {
-      const response = await axios.post(
-        `http://127.0.0.1:8000/auth/${
-          type === "signin" ? "login" : "register"
-        }`,
-        data,
-        { headers: { "Content-Type": "application/json" } }
-      );
-      localStorage.setItem("token", response.data.access_token);
+    if (authAction.fulfilled.match(result)) {
       router.push("/dashboard");
-    } catch (err: any) {
-      let errorMessage = "An error occurred";
-      if (err.response?.data?.detail) {
-        if (typeof err.response.data.detail === "string") {
-          errorMessage = err.response.data.detail;
-        } else if (Array.isArray(err.response.data.detail)) {
-          errorMessage = err.response.data.detail
-            .map((e: any) => e.msg)
-            .join(", ");
-        } else if (err.response.data.detail.msg) {
-          errorMessage = err.response.data.detail.msg;
-        }
-      }
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
     }
   }
 

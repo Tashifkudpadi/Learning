@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   BookOpen,
   ClipboardList,
@@ -15,19 +15,20 @@ import {
   Menu,
   X,
   GraduationCap,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import type { UserRole } from "@/types/user"
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { UserRole } from "@/types/user";
 
 interface SidebarProps {
-  userRole: UserRole
+  userRole: UserRole;
 }
 
 export default function DashboardSidebar({ userRole }: SidebarProps) {
-  const pathname = usePathname()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  console.log(userRole);
 
   const navigation = [
     {
@@ -78,32 +79,34 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
       icon: BookText,
       roles: ["admin"],
     },
-  ]
+  ];
 
-  const filteredNavigation = navigation.filter((item) => item.roles.includes(userRole))
+  const filteredNavigation = navigation.filter((item) =>
+    item.roles.includes(userRole)
+  );
 
   const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen)
-  }
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   const roleLabels = {
     admin: "Administrator",
     faculty: "Faculty",
     student: "Student",
-  }
+  };
 
   const getRoleColor = (role: UserRole) => {
     switch (role) {
       case "admin":
-        return "bg-destructive"
+        return "bg-destructive";
       case "faculty":
-        return "bg-primary"
+        return "bg-primary";
       case "student":
-        return "bg-secondary"
+        return "bg-secondary";
       default:
-        return "bg-primary"
+        return "bg-primary";
     }
-  }
+  };
 
   return (
     <>
@@ -115,7 +118,11 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
           onClick={toggleMobileMenu}
           className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
         >
-          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {isMobileMenuOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
@@ -123,7 +130,9 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-30 w-64 transform bg-gradient-to-b from-slate-900 via-blue-900 to-purple-900 text-white border-r border-white/10 transition-transform duration-300 ease-in-out",
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          isMobileMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">
@@ -149,7 +158,11 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
           <div className="flex items-center px-4 py-4 border-b border-white/10 bg-white/5">
             <Avatar className="h-10 w-10">
               <AvatarImage src="/placeholder.svg" alt="User" />
-              <AvatarFallback className={`${getRoleColor(userRole)} text-primary-foreground`}>JD</AvatarFallback>
+              <AvatarFallback
+                className={`${getRoleColor(userRole)} text-primary-foreground`}
+              >
+                JD
+              </AvatarFallback>
             </Avatar>
             <div className="ml-3">
               <p className="text-sm font-medium text-white">John Doe</p>
@@ -160,7 +173,7 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {filteredNavigation.map((item) => {
-              const isActive = pathname === item.href
+              const isActive = pathname === item.href;
 
               return (
                 <div key={item.name} className="relative">
@@ -175,11 +188,18 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
                       "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 relative",
                       isActive
                         ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white shadow-lg border-l-2 border-transparent ml-1"
-                        : "text-gray-300 hover:text-white hover:bg-white/10 ml-1",
+                        : "text-gray-300 hover:text-white hover:bg-white/10 ml-1"
                     )}
                   >
-                    <item.icon className={cn("mr-3 h-4 w-4", isActive ? "text-blue-300" : "")} />
-                    <span className={isActive ? "font-semibold" : ""}>{item.name}</span>
+                    <item.icon
+                      className={cn(
+                        "mr-3 h-4 w-4",
+                        isActive ? "text-blue-300" : ""
+                      )}
+                    />
+                    <span className={isActive ? "font-semibold" : ""}>
+                      {item.name}
+                    </span>
 
                     {/* Additional glow effect for active item */}
                     {isActive && (
@@ -187,7 +207,7 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
                     )}
                   </Link>
                 </div>
-              )
+              );
             })}
           </nav>
 
@@ -205,7 +225,12 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
       </div>
 
       {/* Overlay for mobile */}
-      {isMobileMenuOpen && <div className="fixed inset-0 z-20 bg-black/80 md:hidden" onClick={toggleMobileMenu} />}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/80 md:hidden"
+          onClick={toggleMobileMenu}
+        />
+      )}
     </>
-  )
+  );
 }
