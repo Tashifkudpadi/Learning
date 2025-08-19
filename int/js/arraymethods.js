@@ -117,6 +117,19 @@ const chainedResult = numbers
   .reduce((acc, num) => acc + num, 0); // Sum the remaining numbers
 console.log("Chained Result:", chainedResult);
 
+// 26. convert number to array
+const num = 12345;
+const arry = num.toString().split("").map(Number);
+console.log("arry", arry);
+
+// or
+
+const arry2 = Array.from(String(num), Number);
+console.log("arry2", arry2);
+// to revert it back
+const reverted = Number(arry2.join(""));
+console.log("reverted", reverted);
+
 var x = null;
 console.log(x);
 
