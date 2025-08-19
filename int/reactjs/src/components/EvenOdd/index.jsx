@@ -22,7 +22,7 @@ const EvenOdd = () => {
     <>
       <form onSubmit={handleSubmit}>
         <input
-          type="text"
+          type="number"
           onChange={(e) => setInputNum(e.target.value)}
           value={inputNum}
         />
