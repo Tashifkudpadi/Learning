@@ -5,7 +5,7 @@
 // Converts the array to a string (comma-separated).
 let names = ["Danny", "Joe", "Sarah", "Molly"];
 let stringNames = names.toString();
-console.log(stringNames);
+console.log(stringNames); // "Danny,Joe,Sarah,Molly"
 
 const arr = [1, 2, 3];
 console.log(arr.toString()); // "1,2,3"
@@ -30,20 +30,22 @@ console.log(a.concat(b)); // [1, 2, 3, 4]
 
 /////////////////////////////////// //////////////////////////////////////////
 // join();
-let names2 = ["Danny", "Joe", "Sarah", "Molly"];
+let names2 = ["Danny", "Joe", "Sarah", "Molly"]; //join() is used to join the array elements with a custom separator
 let stringNames2 = names2.join(", ");
-console.log(stringNames2);
+console.log(stringNames2); // "Danny, Joe, Sarah, Molly"
 
 /////////////////////////////////// //////////////////////////////////////////
 // some();
 let numbersArray4 = [1, 2, 3, 4];
+const testNum = Math.max(...numbersArray4);
+console.log(testNum);
 let isEven = numbersArray4.some(function (number) {
   return number % 2 === 0;
 });
 console.log(isEven); //true
 
 let isGreaterThan5 = numbersArray4.some((n) => n > 5);
-console.log(isGreaterThan5);
+console.log(isGreaterThan5); //false
 
 // every();
 let numbersArray5 = [1, 2, 3, 4];
@@ -161,11 +163,11 @@ console.log(names5); //['Danny', 'Joe', 'Molly']
 // Adding the element using splice
 let names7 = ["Danny", "Joe", "Sarah", "Molly"];
 names7.splice(1, 2, "Bill", "Bob");
-console.log(names7);
+console.log(names7); // ['Danny', 'Bill', 'Bob', 'Molly']
 
 const arr3 = [1, 2, 3, 4];
 arr3.splice(1, 2, "a", "b");
-console.log(arr); // [1, 'a', 'b', 4]
+console.log(arr3); // [1, 'a', 'b', 4]
 
 //////////////////////////////////////////////////////////////////////////////////
 // slice // is used to get the part of the array
@@ -278,7 +280,7 @@ let findIndexNumber = numbersArray8.findIndex((number) => {
 console.log(findIndexNumber); //2
 
 let mayoo = stock.findIndex((s) => s.item === "mayo");
-console.log(mayoo);
+console.log(mayoo); //returns index of first occurrence of "mayo"
 
 const index1 = [5, 12, 8, 130].findIndex((num) => num > 10);
 console.log(index1); // 1
@@ -318,8 +320,10 @@ const test = [1, 2];
 console.log("res", test.map(String));
 // Output: "res" [ "1", "2" ]
 
-// convert array to strings to array of numbers
+// convert array of strings to array of numbers
 const test2 = ["1", "2"];
+console.log(test2.map(Number)); // Output: [ 1, 2 ]
+
 console.log("res", test2.map(Number));
 // Output: "res" [ 1, 2 ]
 
@@ -329,4 +333,4 @@ const alter = String(arrayOfNumbers) + String(arrayOfNumbers2);
 console.log(alter);
 
 const convertToArry = alter.split("").map(Number);
-console.log(convertToArry);
+console.log(convertToArry); // Output: [ 1, 2, 3, 4, 5, 6, 7, 8 ]

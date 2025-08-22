@@ -5,9 +5,12 @@ const SearchQueryTable = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    fetch("https://dummyjson.com/users")
-      .then((res) => res.json())
-      .then((data) => setTableData(data.users));
+    async function fetchData() {
+      const res = await fetch("https://dummyjson.com/users");
+      const data = await res.json();
+      setTableData(data.users);
+    }
+    fetchData();
   }, []);
 
   const filteredTable = tableData.filter(

@@ -1,4 +1,5 @@
 import Ascdesc from "./components/AscDesc";
+import Counter from "./components/Counter/Counter";
 import EvenOdd from "./components/EvenOdd";
 import SearchQueryTable from "./components/SearchQueryTable";
 import Users from "./components/Users";
@@ -15,6 +16,8 @@ function App() {
       <EvenOdd />
       <h2>SearchQueryTable</h2>
       <SearchQueryTable />
+      <h2>Counter</h2>
+      <Counter />
     </>
   );
 }

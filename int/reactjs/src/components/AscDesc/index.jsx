@@ -13,7 +13,8 @@ const Ascdesc = () => {
     const uniqueNumbers = [...new Set(numberArray)];
 
     const ascSorted = [...uniqueNumbers].sort((a, b) => a - b);
-    const descSorted = [...uniqueNumbers].sort((a, b) => b - a);
+    // or const descSorted = [...uniqueNumbers].sort((a, b) => b - a);
+    const descSorted = [...ascSorted].reverse();
 
     setAscNumbers(ascSorted);
     setDescNumbers(descSorted);

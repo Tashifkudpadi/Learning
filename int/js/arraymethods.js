@@ -198,23 +198,23 @@ console.log("bind method:", detailsOfPerson1());
 ///////////////// convert this to arrow
 let obj = { id: "1", name: "user22", age: "26", work: "programmer" };
 let array = Object.values(obj);
-console.log(array); //only values will be in array
+console.log("arrayconversion", array); //only values will be in array
 
 let array2 = Object.keys(obj);
-console.log(array2); //only keys will be in array
+console.log("arrayconversion", array2); //only keys will be in array
 
 let array3 = Object.entries(obj);
-console.log(array3); //both keys and values will be in array of array
+console.log("array3", array3); //both keys and values will be in array of array
 
 let array4 = Object.assign(obj);
-console.log(array4); //assign the object to another object
+console.log("array4", array4); //assign the object to another object
 
 let array5 = [obj];
-console.log(array5); //Array of object
+console.log("array5", array5); //Array of object
 
 ///////////////// convert array to object
 let arrayToObj = Object.fromEntries(array3);
-console.log(arrayToObj);
+console.log("arrayToObj", arrayToObj);
 
 let arr = [
   { key: "id", value: "1" },
@@ -236,3 +236,13 @@ console.log(obj3);
 // Use Object.fromEntries() if you have [key, value] pairs.
 // Use reduce() if you have array of objects with key and value.
 // Spread ... if you just want indices as keys.
+
+function init() {
+  console.log(displayName()); // use variable declared in the parent function
+  function displayName() {
+    var name = "Mozilla"; // name is a local variable created by init
+    // displayName() is the inner function, that forms a closure
+    return name;
+  }
+}
+init();
