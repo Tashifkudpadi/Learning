@@ -20,6 +20,10 @@ For example, let’s say we are working on a project that requires python 3.9 an
 <!-- or -->
 <!-- pip install "fastapi[all]" -->
 
+if u have cloned the project from github, u can use the following command to install the dependencies.
+
+<!-- pip install -r requirements.txt -->
+
 -What is fastAPI?
 FastAPI is a modern, fast (high-performance), web framework for building APIs with Python 3.7+ based on standard Python type hints. It’s designed to be fast, scalable, and secure. It’s built on top of standard Python type hints and supports asynchronous programming.
 
@@ -289,7 +293,7 @@ alembic head <!--this will show newly created revision id-->
 
 <!-- to make the migration  -->
 
-alembic upgrade head <!-- this will apply the migration -->
+alembic upgrade head <!-- this will apply the migration to the database with latest revision -->
 
 <!-- to remove the content column -->
 
