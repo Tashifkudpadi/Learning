@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from pydantic.types import conint
 
 #  ------------------------------------version 1-----------------------
@@ -90,4 +90,5 @@ class TokenData(BaseModel):  # to verify the access token in oauth2 files
 class Vote(BaseModel):
     post_id: int
     # dir is either 1 or -1. ge=1 means greater than or equal to 1. le=1 means less than or equal to 1.
-    dir: conint(le=1)
+    # dir: conint(le=1)
+    dir: int = Field(..., le=1)  # instead of conint(le=1)

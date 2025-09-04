@@ -1,4 +1,4 @@
-from .. import models, schemas, utils
+from .. import models, schemas, utils, oauth2
 from ..database import get_db
 from fastapi import Depends, HTTPException, status, APIRouter
 from sqlalchemy.orm import Session
@@ -45,12 +45,15 @@ def get_users(db: Session = Depends(get_db)):
 
 
 @router.put('/{id}', response_model=schemas.UserResponse)
-def update_user(id: int, user: schemas.UserCreate, db: Session = Depends(get_db)):
+def update_user(id: int, user: schemas.UserCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     existing_user = db.query(models.Users).filter(
         models.Users.id == id).first()
     if not existing_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"user with id: {id} was not found")
+    if existing_user.id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Not authorized to perform requested action")
     existing_user.email = user.email
     existing_user.password = utils.hash(user.password)
     db.commit()

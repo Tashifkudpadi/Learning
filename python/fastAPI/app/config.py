@@ -13,6 +13,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        model_config = {"from_attributes": True}
 
 
 settings = Settings()
