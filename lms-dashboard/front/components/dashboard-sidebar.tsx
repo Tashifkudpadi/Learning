@@ -20,15 +20,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { UserRole } from "@/types/user";
+import { useAppSelector } from "@/store/hooks";
 
-interface SidebarProps {
-  userRole: UserRole;
-}
-
-export default function DashboardSidebar({ userRole }: SidebarProps) {
+export default function DashboardSidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  console.log(userRole);
+  const user = useAppSelector((state) => state.auth.user);
+  console.log(user);
 
   const navigation = [
     {
@@ -82,7 +80,7 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
   ];
 
   const filteredNavigation = navigation.filter((item) =>
-    item.roles.includes(userRole)
+    item.roles.includes(user?.role)
   );
 
   const toggleMobileMenu = () => {
@@ -90,7 +88,7 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
   };
 
   const roleLabels = {
-    admin: "Administrator",
+    admin: "Admin",
     faculty: "Faculty",
     student: "Student",
   };
@@ -159,14 +157,18 @@ export default function DashboardSidebar({ userRole }: SidebarProps) {
             <Avatar className="h-10 w-10">
               <AvatarImage src="/placeholder.svg" alt="User" />
               <AvatarFallback
-                className={`${getRoleColor(userRole)} text-primary-foreground`}
+                className={`${getRoleColor(
+                  user?.role
+                )} text-primary-foreground`}
               >
                 JD
               </AvatarFallback>
             </Avatar>
             <div className="ml-3">
-              <p className="text-sm font-medium text-white">John Doe</p>
-              <p className="text-xs text-gray-300">{roleLabels[userRole]}</p>
+              <p className="text-sm font-medium text-white">
+                {user?.first_name} {user?.last_name}
+              </p>
+              <p className="text-xs text-gray-300">{roleLabels[user?.role]}</p>
             </div>
           </div>
 

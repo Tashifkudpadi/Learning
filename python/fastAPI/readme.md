@@ -265,7 +265,7 @@ config.set_main_option(
     'sqlalchemy.url', 'postgresql+psycopg2://yourusername:yourpassword@localhost:5432/yourdbname') -->
 
 <!-- we can leave sqlalchemy.url = empty in the alembic.ini file -->
-<!-- then import app.config settings change it to 'sqlalchemy.url', f'postgresql+psycopg2://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}')
+<!-- then import app.config settings in the alembic folder > env.py file and change it to 'sqlalchemy.url', f'postgresql+psycopg2://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}')
  -->
 
  <!-- docs link -->

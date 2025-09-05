@@ -11,15 +11,13 @@ interface User {
 }
 
 interface AuthState {
-  user: User | null;
-  token: string | null;
+  user: User[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: AuthState = {
-  user: null,
-  token: null,
+  user: [],
   loading: false,
   error: null,
 };
@@ -41,7 +39,6 @@ export const authAction = createAsyncThunk(
       );
 
       // Save in localStorage
-      localStorage.setItem("token", response.data.access_token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
       return response.data; // { access_token, user }
@@ -58,25 +55,18 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout: (state) => {
-      state.user = null;
-      state.token = null;
-      localStorage.removeItem("token");
+      state.user = [];
       localStorage.removeItem("user");
     },
     loadUserFromStorage: (state) => {
-      const token = localStorage.getItem("token");
       const user = localStorage.getItem("user");
-
-      if (token) {
-        state.token = token;
-      }
 
       if (user) {
         try {
           state.user = JSON.parse(user);
         } catch (e) {
           console.error("Failed to parse user from localStorage", e);
-          state.user = null;
+          state.user = [];
         }
       }
     },
@@ -89,8 +79,7 @@ const authSlice = createSlice({
       })
       .addCase(authAction.fulfilled, (state, action) => {
         state.loading = false;
-        state.token = action.payload.access_token;
-        state.user = action.payload.user;
+        state.user = action.payload;
       })
       .addCase(authAction.rejected, (state, action) => {
         state.loading = false;
