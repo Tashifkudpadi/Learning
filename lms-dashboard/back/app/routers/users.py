@@ -1,10 +1,10 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from models.user import User, Role
-# from models.student import Student
-# from models.faculty import Faculty
-from database import get_db
+from app.models.user import User, Role
+# from app.models.student import Student
+# from app.models.faculty import Faculty
+from app.database import get_db
 from pydantic import BaseModel
 
 router = APIRouter(tags=["users"])

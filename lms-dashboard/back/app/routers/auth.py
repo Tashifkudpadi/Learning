@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from models.user import User, Role
-from schemas.user import UserCreate, Token, UserLogin
-from utils.auth import get_password_hash, verify_password, create_access_token
-from database import get_db
+from app.models.user import User, Role
+from app.schemas.user import UserCreate, UserLogin
+from app.utils.auth import get_password_hash, verify_password, create_access_token
+from app.database import get_db
 from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 router = APIRouter()
@@ -18,7 +18,7 @@ class LoginRequest(BaseModel):
     role: Role
 
 
-@router.post("/register", response_model=Token)
+@router.post("/register")
 async def register(user: UserCreate, db: Session = Depends(get_db)):
     if user.password != user.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
@@ -40,7 +40,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     db_user = User(
         **user.model_dump(exclude={"password", "confirm_password"}),
         hashed_password=hashed_password,
-        last_active=datetime.utcnow()
+        last_active=datetime.now(timezone.utc)
     )
     db.add(db_user)
     db.commit()
@@ -51,7 +51,9 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "token_type": "bearer",
+        "id": db_user.id,
         "first_name": db_user.first_name,
+        "last_name": db_user.last_name,
         "email": db_user.email,
         "role": db_user.role.value
     }
@@ -68,7 +70,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
      # Update last_active timestamp
-    db_user.last_active = datetime.utcnow()
+    db_user.last_active = datetime.now(timezone.utc)
     db.add(db_user)
     db.commit()
     access_token = create_access_token(

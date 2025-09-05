@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 import os
 
-from database import get_db
-from models.user import User
+from app.database import get_db
+from app.models.user import User
 
 load_dotenv()
 
@@ -23,13 +23,18 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # 🔐 Password handling
+
+
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 # 🔑 JWT token creation
+
+
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -38,6 +43,8 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt
 
 # 👤 User retrieval from token
+
+
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

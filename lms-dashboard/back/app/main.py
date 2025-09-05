@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, users, students, faculties, subjects
-from database import Base, engine
-from models import faculty, subject, faculty_subject
+from app.routers import auth, users, students, faculties, subjects
+from app.database import Base, engine
 
 app = FastAPI(title="EduPlatform LMS API")
 
