@@ -45,7 +45,7 @@ export default function AuthForm() {
   // const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string>(""); // Add state for role
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.auth);
+  const { loading, error } = useAppSelector((state) => state.authReducer);
 
   const router = useRouter();
 

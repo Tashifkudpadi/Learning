@@ -1,4 +1,3 @@
-// components/BatchesPage.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -10,6 +9,8 @@ import {
   deleteBatch,
   clearBatchError,
 } from "@/store/batches";
+import { fetchStudents } from "@/store/students";
+import { fetchFaculty } from "@/store/faculties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,11 +30,16 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 export default function BatchesPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { batches, loading, error } = useAppSelector((state) => state.batches);
+  const { batches, loading, error } = useAppSelector(
+    (state) => state.batchesReducer
+  );
+  const { students } = useAppSelector((state) => state.studentsReducer);
+  const { faculty } = useAppSelector((state) => state.facultyReducer);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -42,10 +48,14 @@ export default function BatchesPage() {
     start_date: "",
     end_date: "",
     num_learners: 0,
+    student_ids: [] as number[],
+    faculty_ids: [] as number[],
   });
 
   useEffect(() => {
     dispatch(fetchBatches());
+    dispatch(fetchStudents());
+    dispatch(fetchFaculty());
   }, [dispatch]);
 
   const handleChange = (e: any) => {
@@ -53,6 +63,15 @@ export default function BatchesPage() {
     setFormData({
       ...formData,
       [name]: name === "num_learners" ? +value : value,
+    });
+  };
+
+  const handleMultiSelect = (e: any) => {
+    const { name, selectedOptions } = e.target;
+    const values = Array.from(selectedOptions, (opt: any) => +opt.value);
+    setFormData({
+      ...formData,
+      [name]: values,
     });
   };
 
@@ -64,7 +83,14 @@ export default function BatchesPage() {
     } else {
       await dispatch(addBatch(formData));
     }
-    setFormData({ name: "", start_date: "", end_date: "", num_learners: 0 });
+    setFormData({
+      name: "",
+      start_date: "",
+      end_date: "",
+      num_learners: 0,
+      student_ids: [],
+      faculty_ids: [],
+    });
     setEditId(null);
     setIsDialogOpen(false);
   };
@@ -82,7 +108,7 @@ export default function BatchesPage() {
   };
 
   const handleBatchClick = (id: number) => {
-    router.push(`/batches/${id}`); // route to student list page
+    router.push(`/batches/${id}`);
   };
 
   return (
@@ -144,6 +170,42 @@ export default function BatchesPage() {
                   required
                 />
               </div>
+              <div>
+                <Label htmlFor="student_ids">Students</Label>
+                <MultiSelect
+                  options={students.map((s) => ({
+                    label: `${s.name} (${s.roll_number})`,
+                    value: String(s.id),
+                  }))}
+                  selected={formData.student_ids.map(String)}
+                  onChange={(values) =>
+                    setFormData({
+                      ...formData,
+                      student_ids: values.map(Number),
+                    })
+                  }
+                  placeholder="Select students"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="faculty_ids">Faculties</Label>
+                <MultiSelect
+                  options={faculty.map((f) => ({
+                    label: `${f.name} (${f.email})`,
+                    value: String(f.id),
+                  }))}
+                  selected={formData.faculty_ids.map(String)}
+                  onChange={(values) =>
+                    setFormData({
+                      ...formData,
+                      faculty_ids: values.map(Number),
+                    })
+                  }
+                  placeholder="Select faculties"
+                />
+              </div>
+
               <Button type="submit" className="w-full">
                 {editId ? "Update" : "Add"} Batch
               </Button>

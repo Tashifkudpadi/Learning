@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
+from app.schemas.topic import TopicOut
 
 
 class SubjectBase(BaseModel):
@@ -18,6 +19,7 @@ class SubjectUpdate(SubjectBase):
 class SubjectOut(SubjectBase):
     id: int
     faculty_ids: List[int] = []
+    topics: List[TopicOut] = []
 
     class Config:
         orm_mode = True

@@ -47,7 +47,9 @@ import { User } from "@/store/types";
 
 export default function UsersPage() {
   const dispatch = useAppDispatch();
-  const { users, loading, error } = useAppSelector((state) => state.users);
+  const { users, loading, error } = useAppSelector(
+    (state) => state.userReducer
+  );
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editUserId, setEditUserId] = useState<number | null>(null);
@@ -136,8 +138,8 @@ export default function UsersPage() {
   // Filter users based on search
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase())
+      user.name?.toLowerCase().includes(search.toLowerCase()) ||
+      user.email?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -312,7 +314,7 @@ export default function UsersPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user, index) => (
+              filteredUsers.map((user: any, index) => (
                 <TableRow key={user.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>

@@ -4,7 +4,8 @@ import axios from "axios";
 
 export interface User {
   id: number;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   role: string;
   last_active: string | null;
@@ -29,7 +30,7 @@ export const fetchUsers = createAsyncThunk(
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `${API_CONFIG.BASE_API}${API_CONFIG.USERS}`,
+        `${API_CONFIG.BASE_API}${API_CONFIG.USERS_API_URL}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -60,7 +61,7 @@ export const addUser = createAsyncThunk(
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `${API_CONFIG.BASE_API}/auth/register`,
+        `${API_CONFIG.BASE_API}${API_CONFIG.REGISTER_API_URL}`,
         userData,
         {
           headers: {
@@ -69,13 +70,7 @@ export const addUser = createAsyncThunk(
           },
         }
       );
-      return {
-        id: response.data.user_id || Date.now(), // Fallback ID
-        name: `${userData.first_name} ${userData.last_name}`,
-        email: userData.email,
-        role: userData.role,
-        last_active: new Date().toISOString(),
-      } as User;
+      return response.data as User;
     } catch (err: any) {
       return rejectWithValue(
         typeof err.response?.data?.detail === "string"
@@ -108,7 +103,7 @@ export const updateUser = createAsyncThunk(
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        `${API_CONFIG.BASE_API}${API_CONFIG.USERS}/${userId}`,
+        `${API_CONFIG.BASE_API}${API_CONFIG.USERS_API_URL}/${userId}`,
         userData,
         {
           headers: {
@@ -136,7 +131,7 @@ export const deleteUser = createAsyncThunk(
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `${API_CONFIG.BASE_API}${API_CONFIG.USERS}/${userId}`,
+        `${API_CONFIG.BASE_API}${API_CONFIG.USERS_API_URL}/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

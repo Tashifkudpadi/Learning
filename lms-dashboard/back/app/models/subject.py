@@ -12,3 +12,5 @@ class Subject(Base):
 
     faculties = relationship(
         "Faculty", secondary="faculty_subject", back_populates="subjects")
+    topics = relationship("Topic", back_populates="subject",
+                          cascade="all, delete-orphan")

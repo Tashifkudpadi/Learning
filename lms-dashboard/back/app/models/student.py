@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from app.database import Base
+from sqlalchemy.orm import relationship
 
 
 class Student(Base):
@@ -11,3 +12,5 @@ class Student(Base):
     roll_number = Column(String)
     mobile_number = Column(String)  # <-- ✅ change from Integer to String
     enrollment_date = Column(DateTime, nullable=True)
+    batches = relationship(
+        "Batch", secondary="batch_students", back_populates="students")

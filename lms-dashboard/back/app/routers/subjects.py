@@ -47,7 +47,8 @@ def get_subjects(db: Session = Depends(get_db)):
             id=subject.id,
             name=subject.name,
             code=subject.code,
-            faculty_ids=faculty_ids
+            faculty_ids=faculty_ids,
+            topics=subject.topics
         ))
     return result
 
@@ -65,7 +66,8 @@ def get_subject(subject_id: int, db: Session = Depends(get_db)):
         id=subject.id,
         name=subject.name,
         code=subject.code,
-        faculty_ids=faculty_ids
+        faculty_ids=faculty_ids,
+        topics=subject.topics
     )
 
 
@@ -97,7 +99,8 @@ def update_subject(subject_id: int, update: SubjectUpdate, db: Session = Depends
         id=subject.id,
         name=subject.name,
         code=subject.code,
-        faculty_ids=update.faculty_ids
+        faculty_ids=update.faculty_ids,
+        topics=subject.topics
     )
 
 

@@ -40,7 +40,7 @@ import { MoreHorizontal, Search, UserPlus, Download } from "lucide-react";
 
 export default function LearnersPage() {
   const dispatch = useAppDispatch();
-  const { students, error } = useAppSelector((state) => state.students);
+  const { students, error } = useAppSelector((state) => state.studentsReducer);
 
   const [search, setSearch] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);

@@ -46,8 +46,8 @@ interface Subject {
 
 export default function SubjectsPage() {
   const dispatch = useAppDispatch();
-  const { subjects, error } = useAppSelector((state) => state.subjects);
-  const { faculty } = useAppSelector((state) => state.faculty);
+  const { subjects, error } = useAppSelector((state) => state.subjectsReducer);
+  const { faculty } = useAppSelector((state) => state.facultyReducer);
 
   const [search, setSearch] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);

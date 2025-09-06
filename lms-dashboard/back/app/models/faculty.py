@@ -13,3 +13,5 @@ class Faculty(Base):
 
     subjects = relationship(
         "Subject", secondary="faculty_subject", back_populates="faculties")
+    batches = relationship(
+        "Batch", secondary="batch_faculties", back_populates="faculties")

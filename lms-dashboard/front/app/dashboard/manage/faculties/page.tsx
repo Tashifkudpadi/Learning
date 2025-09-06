@@ -48,8 +48,8 @@ interface Faculty {
 
 export default function FacultiesPage() {
   const dispatch = useAppDispatch();
-  const { faculty, error } = useAppSelector((state) => state.faculty);
-  const { subjects } = useAppSelector((state) => state.subjects);
+  const { faculty, error } = useAppSelector((state) => state.facultyReducer);
+  const { subjects } = useAppSelector((state) => state.subjectsReducer);
   console.log("subjects", subjects);
 
   const [search, setSearch] = useState("");

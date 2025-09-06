@@ -1,23 +1,19 @@
 import { configureStore } from "@reduxjs/toolkit";
-import userReducer from "./users";
-import studentsReducer from "./students";
-import batchesReducer from "./batches";
-import facultyReducer from "./faculties";
-import subjectsReducer from "./subjects";
-import authReducer from "./auth";
+import StudentsReducer from "./students";
+import BatchesReducer from "./batches";
+import FacultyReducer from "./faculties";
+import SubjectsReducer from "./subjects";
+import AuthReducer from "./auth";
+import UserReducer from "./users";
 
 export const store = configureStore({
   reducer: {
-    users: userReducer,
-    // students: studentReducer,
-    // batches: batchReducer,
-    // faculty: facultyReducer,
-    // subjects: subjectReducer,
-    auth: authReducer,
-    batches: batchesReducer,
-    students: studentsReducer,
-    faculty: facultyReducer,
-    subjects: subjectsReducer,
+    userReducer: UserReducer,
+    studentsReducer: StudentsReducer,
+    batchesReducer: BatchesReducer,
+    facultyReducer: FacultyReducer,
+    subjectsReducer: SubjectsReducer,
+    authReducer: AuthReducer,
   },
 });
 

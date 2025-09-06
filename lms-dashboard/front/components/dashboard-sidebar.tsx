@@ -25,7 +25,7 @@ import { useAppSelector } from "@/store/hooks";
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const user = useAppSelector((state) => state.auth.user);
+  const { user } = useAppSelector((state) => state.authReducer);
   console.log(user);
 
   const navigation = [
@@ -80,7 +80,7 @@ export default function DashboardSidebar() {
   ];
 
   const filteredNavigation = navigation.filter((item) =>
-    item.roles.includes(user?.role)
+    item.roles.includes(user?.role ?? "")
   );
 
   const toggleMobileMenu = () => {
@@ -155,20 +155,23 @@ export default function DashboardSidebar() {
           {/* User Profile */}
           <div className="flex items-center px-4 py-4 border-b border-white/10 bg-white/5">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="/placeholder.svg" alt="User" />
+              {/* <AvatarImage src="/placeholder.svg" alt="User" /> */}
               <AvatarFallback
                 className={`${getRoleColor(
-                  user?.role
+                  user?.role ?? "student"
                 )} text-primary-foreground`}
               >
-                JD
+                {(user?.first_name?.charAt(0) ?? "").toUpperCase() +
+                  (user?.last_name?.charAt(0) ?? "").toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="ml-3">
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-medium text-white capitalize">
                 {user?.first_name} {user?.last_name}
               </p>
-              <p className="text-xs text-gray-300">{roleLabels[user?.role]}</p>
+              <p className="text-xs text-gray-300">
+                {roleLabels[user?.role ?? "student"]}
+              </p>
             </div>
           </div>
 
