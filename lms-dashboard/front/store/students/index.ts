@@ -92,7 +92,7 @@ export const updateStudent = createAsyncThunk(
         name?: string;
         email?: string;
         roll_number?: string;
-        mobile_number?: number;
+        mobile_number?: string;
         enrollment_date?: string;
       };
     },

@@ -54,27 +54,27 @@ export default function DashboardSidebar() {
       roles: ["admin", "faculty"],
     },
     {
-      name: "Faculties",
-      href: "/dashboard/manage/faculties",
-      icon: UserPlus,
-      roles: ["admin"],
-    },
-    {
       name: "Batches",
       href: "/dashboard/manage/batches",
       icon: Layers,
       roles: ["admin"],
     },
     {
-      name: "Users",
-      href: "/dashboard/manage/users",
-      icon: User,
+      name: "Faculties",
+      href: "/dashboard/manage/faculties",
+      icon: UserPlus,
       roles: ["admin"],
     },
     {
       name: "Subjects",
       href: "/dashboard/manage/subjects",
       icon: BookText,
+      roles: ["admin"],
+    },
+    {
+      name: "Users",
+      href: "/dashboard/manage/users",
+      icon: User,
       roles: ["admin"],
     },
   ];
@@ -220,7 +220,7 @@ export default function DashboardSidebar() {
           <div className="p-4 border-t border-white/10">
             <Button
               variant="outline"
-              className="w-full border-white/20 text-gray-300 hover:text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
+              className="w-full border-white/20 text-black hover:text-white hover:bg-white/10 hover:border-white/30 transition-all duration-200"
               asChild
             >
               <Link href="/">Sign Out</Link>

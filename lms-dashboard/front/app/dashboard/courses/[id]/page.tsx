@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardContent,
@@ -28,27 +30,52 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo, use as usePromise } from "react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchCourseById } from "@/store/courses";
+import ContentsTab from "@/app/dashboard/courses/tabs/ContentsTab";
+import LearnersTab from "@/app/dashboard/courses/tabs/LearnersTab";
+import BatchesTab from "@/app/dashboard/courses/tabs/BatchesTab";
+import TestsTab from "@/app/dashboard/courses/tabs/TestsTab";
+import AssignmentsTab from "@/app/dashboard/courses/tabs/AssignmentsTab";
+import SettingsTab from "@/app/dashboard/courses/tabs/SettingsTab";
 
-export default function ViewCoursePage({ params }: { params: { id: string } }) {
-  // Sample course data - in real app, fetch based on params.id
-  const course = {
-    id: params.id,
-    title: "Introduction to Web Development",
-    description:
-      "Master the fundamentals of web development with HTML, CSS, and JavaScript. Build responsive websites and learn modern development practices.",
-    instructor: {
-      name: "Dr. Jane Smith",
-      title: "Senior Web Developer & Educator",
-      avatar: "/placeholder.svg",
-      rating: 4.9,
-      students: 15420,
-    },
-    students: 120,
-    startDate: "Sep 1, 2023",
-    totalContents: 24,
-    totalAssignments: 4,
-    totalTests: 4,
-  };
+export default function ViewCoursePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = usePromise(params);
+  const dispatch = useAppDispatch();
+  const { selected, loading } = useAppSelector((state) => state.coursesReducer);
+
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchCourseById(id));
+    }
+  }, [dispatch, id]);
+
+  // Normalize the API response to the UI shape with safe fallbacks
+  const course = useMemo(() => {
+    const c: any = selected || {};
+    return {
+      id: c.id ?? id,
+      title: c.course_name ?? c.title ?? "",
+      description: c.course_desc ?? c.description ?? "",
+      instructor: {
+        name: c.instructor_name ?? c.instructor?.name ?? "",
+        title: c.instructor_title ?? c.instructor?.title ?? "",
+        avatar: c.instructor_avatar ?? c.instructor?.avatar ?? "/placeholder.svg",
+        rating: c.instructor_rating ?? c.instructor?.rating ?? "",
+        students: c.instructor_students ?? c.instructor?.students ?? "",
+      },
+      students: c.students ?? "",
+      startDate: c.start_date ?? c.created_at ?? "",
+      totalContents: c.total_contents ?? "",
+      totalAssignments: c.total_assignments ?? "",
+      totalTests: c.total_tests ?? "",
+    };
+  }, [selected, id]);
 
   const lessons = [
     {
@@ -133,57 +160,6 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
     },
   ];
 
-  const announcements = [
-    {
-      id: 1,
-      title: "New Assignment Posted",
-      message:
-        "CSS Flexbox assignment is now available. Due date: October 25th.",
-      date: "Oct 15, 2023",
-      type: "assignment",
-    },
-    {
-      id: 2,
-      title: "Live Q&A Session",
-      message: "Join us for a live Q&A session this Friday at 3 PM EST.",
-      date: "Oct 12, 2023",
-      type: "announcement",
-    },
-    {
-      id: 3,
-      title: "Course Materials Updated",
-      message: "New resources and examples have been added to Module 3.",
-      date: "Oct 10, 2023",
-      type: "update",
-    },
-  ];
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "video":
-        return <Play className="h-4 w-4" />;
-      case "quiz":
-        return <FileText className="h-4 w-4" />;
-      case "assignment":
-        return <BookOpen className="h-4 w-4" />;
-      default:
-        return <FileText className="h-4 w-4" />;
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "video":
-        return "text-blue-600";
-      case "quiz":
-        return "text-green-600";
-      case "assignment":
-        return "text-purple-600";
-      default:
-        return "text-slate-600";
-    }
-  };
-
   return (
     <div className="space-y-8 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 relative">
       {/* Dots Background Pattern */}
@@ -262,10 +238,10 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
                   <Avatar className="h-20 w-20 mx-auto ring-4 ring-white/30">
                     <AvatarImage
                       src={course.instructor.avatar || "/placeholder.svg"}
-                      alt={course.instructor.name}
+                      alt={course.instructor.name || "Instructor"}
                     />
                     <AvatarFallback className="bg-blue-600 text-white text-lg font-bold">
-                      {course.instructor.name.charAt(0)}
+                      {(course.instructor.name || "").charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <CardTitle className="text-slate-900">
@@ -330,117 +306,32 @@ export default function ViewCoursePage({ params }: { params: { id: string } }) {
 
             {/* contents Tab */}
             <TabsContent value="contents" className="mt-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-slate-900">
-                    Course Content
-                  </h3>
-                </div>
-                <div className="space-y-2">
-                  {lessons.map((lesson) => (
-                    <Card
-                      key={lesson.id}
-                      className={`bg-white/30 backdrop-blur-sm border border-white/30 hover:bg-white/40 transition-all duration-200 ${
-                        lesson.locked ? "opacity-60" : "hover:scale-[1.02]"
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`p-2 rounded-lg bg-white/50 ${getTypeColor(
-                                lesson.type
-                              )} ${lesson.completed ? "bg-green-100" : ""}`}
-                            >
-                              {lesson.completed ? (
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              ) : lesson.locked ? (
-                                <Lock className="h-4 w-4 text-slate-400" />
-                              ) : (
-                                getTypeIcon(lesson.type)
-                              )}
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-slate-900">
-                                {lesson.title}
-                              </h4>
-                              <div className="flex items-center gap-2 text-sm text-slate-600">
-                                <Clock className="h-3 w-3" />
-                                <span>{lesson.duration}</span>
-                                <Badge variant="outline" className="text-xs">
-                                  {lesson.type}
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            disabled={lesson.locked}
-                            className={
-                              lesson.completed
-                                ? "bg-green-600 hover:bg-green-700"
-                                : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                            }
-                          >
-                            {lesson.completed
-                              ? "Review"
-                              : lesson.locked
-                              ? "Locked"
-                              : "Start"}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+              <ContentsTab lessons={lessons} courseId={id} />
             </TabsContent>
 
             {/* learners Tab */}
             <TabsContent value="learners" className="mt-6">
-              <div className="space-y-6">
-                <h2>We have to show all learners here</h2>
-              </div>
+              <LearnersTab />
             </TabsContent>
 
             {/* batches Tab */}
             <TabsContent value="batches" className="mt-6">
-              <div className="space-y-6">
-                <h2>We have to show all batches here</h2>
-              </div>
+              <BatchesTab />
             </TabsContent>
 
             {/* tests Tab */}
             <TabsContent value="tests" className="mt-6">
-              <div className="space-y-4">
-                <div className="space-y-6">
-                  <h2>
-                    We have to show all tests here with more tabs (its
-                    categories)
-                  </h2>
-                </div>
-              </div>
+              <TestsTab />
             </TabsContent>
 
             {/* assignments Tab */}
             <TabsContent value="assignments" className="mt-6">
-              <div className="space-y-4">
-                <div className="space-y-6">
-                  <h2>
-                    We have to show all assignments here with more tabs (its
-                    categories)
-                  </h2>
-                </div>
-              </div>
+              <AssignmentsTab />
             </TabsContent>
 
             {/* settings Tab */}
             <TabsContent value="settings" className="mt-6">
-              <div className="space-y-4">
-                <div className="space-y-6">
-                  <h2>We have to show all setting here</h2>
-                </div>
-              </div>
+              <SettingsTab courseId={id} course={course} selected={selected} />
             </TabsContent>
           </Tabs>
         </div>

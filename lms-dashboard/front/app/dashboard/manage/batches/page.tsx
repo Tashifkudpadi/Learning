@@ -10,7 +10,7 @@ import {
   clearBatchError,
 } from "@/store/batches";
 import { fetchStudents } from "@/store/students";
-import { fetchFaculty } from "@/store/faculties";
+import { fetchFaculties } from "@/store/faculties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -55,7 +55,7 @@ export default function BatchesPage() {
   useEffect(() => {
     dispatch(fetchBatches());
     dispatch(fetchStudents());
-    dispatch(fetchFaculty());
+    dispatch(fetchFaculties());
   }, [dispatch]);
 
   const handleChange = (e: any) => {
@@ -158,17 +158,6 @@ export default function BatchesPage() {
                     required
                   />
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="num_learners">Number of Learners</Label>
-                <Input
-                  id="num_learners"
-                  name="num_learners"
-                  type="number"
-                  value={formData.num_learners}
-                  onChange={handleChange}
-                  required
-                />
               </div>
               <div>
                 <Label htmlFor="student_ids">Students</Label>

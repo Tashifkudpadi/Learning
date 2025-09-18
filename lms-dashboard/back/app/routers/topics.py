@@ -32,6 +32,14 @@ def get_topics(db: Session = Depends(get_db)):
     return db.query(Topic).all()
 
 
+@router.get("/by-subject/{subject_id}", response_model=List[TopicOut])
+def get_topics_by_subject(subject_id: int, db: Session = Depends(get_db)):
+    subject = db.query(Subject).filter(Subject.id == subject_id).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+    return db.query(Topic).filter(Topic.subject_id == subject_id).all()
+
+
 @router.get("/{topic_id}", response_model=TopicOut)
 def get_topic(topic_id: int, db: Session = Depends(get_db)):
     topic = db.query(Topic).filter(Topic.id == topic_id).first()

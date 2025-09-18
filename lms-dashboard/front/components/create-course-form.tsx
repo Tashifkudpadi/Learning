@@ -1,19 +1,10 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -29,84 +20,104 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import {
-  Plus,
-  Upload,
-  CalendarIcon,
-  Clock,
-  BookOpen,
-  Star,
-  DollarSign,
-  Globe,
-  X,
-  ImageIcon,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, Upload, BookOpen, Globe, ImageIcon } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { RootState } from "@/store";
+import { fetchBatches } from "@/store/batches";
+import { fetchSubjects } from "@/store/subjects";
+import { fetchStudents } from "@/store/students";
+import { fetchFaculties } from "@/store/faculties";
+import { MultiSelect } from "@/components/ui/multi-select"; // ✅ your component
+import { clearError, createCourse } from "@/store/courses";
 
 interface CreateCourseFormProps {
   children: React.ReactNode;
 }
 
 export default function CreateCourseForm({ children }: CreateCourseFormProps) {
+  const dispatch = useAppDispatch();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
   const [courseImage, setCourseImage] = useState<string>("");
-  const [prerequisites, setPrerequisites] = useState<string[]>([]);
-  const [newPrerequisite, setNewPrerequisite] = useState("");
-  const [learningOutcomes, setLearningOutcomes] = useState<string[]>([]);
-  const [newOutcome, setNewOutcome] = useState("");
+
+  // ✅ selections state
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [selectedFaculties, setSelectedFaculties] = useState<string[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedBatches, setSelectedBatches] = useState<string[]>([]);
+
+  // ✅ get data from Redux store
+  const students = useAppSelector(
+    (state: RootState) => state.studentsReducer.students
+  );
+  const faculties = useAppSelector(
+    (state: RootState) => state.facultyReducer.faculty
+  );
+  const batches = useAppSelector(
+    (state: RootState) => state.batchesReducer.batches
+  );
+  const subjects = useAppSelector(
+    (state: RootState) => state.subjectsReducer.subjects
+  );
+  const { error } = useAppSelector((state: RootState) => state.coursesReducer);
+
+  useEffect(() => {
+    if (!open) return;
+    dispatch(fetchBatches());
+    dispatch(fetchSubjects());
+    dispatch(fetchStudents());
+    dispatch(fetchFaculties());
+  }, [dispatch, open]);
+
+  console.log(
+    selectedStudents,
+    selectedFaculties,
+    selectedSubjects,
+    selectedBatches
+  );
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    const payload = {
+      course_name: (event.target as any).title.value,
+      course_desc: (event.target as any).description.value,
+      student_ids: selectedStudents.map((id) => Number(id)),
+      faculty_ids: selectedFaculties.map((id) => Number(id)),
+      subject_ids: selectedSubjects.map((id) => Number(id)),
+      batch_ids: selectedBatches.map((id) => Number(id)),
+      is_active: true,
+      is_public: false,
+      course_img: courseImage,
+    };
+
+    try {
+      await dispatch(createCourse(payload)).unwrap();
+
       setIsLoading(false);
       setOpen(false);
-      // Reset form or show success message
-    }, 2000);
-  };
-
-  const addPrerequisite = () => {
-    if (
-      newPrerequisite.trim() &&
-      !prerequisites.includes(newPrerequisite.trim())
-    ) {
-      setPrerequisites([...prerequisites, newPrerequisite.trim()]);
-      setNewPrerequisite("");
+      setSelectedBatches([]);
+      setSelectedFaculties([]);
+      setSelectedStudents([]);
+      setSelectedSubjects([]);
+      setCourseImage("");
+    } catch (err) {
+      setIsLoading(false);
     }
-  };
-
-  const removePrerequisite = (prerequisite: string) => {
-    setPrerequisites(prerequisites.filter((p) => p !== prerequisite));
-  };
-
-  const addLearningOutcome = () => {
-    if (newOutcome.trim() && !learningOutcomes.includes(newOutcome.trim())) {
-      setLearningOutcomes([...learningOutcomes, newOutcome.trim()]);
-      setNewOutcome("");
-    }
-  };
-
-  const removeLearningOutcome = (outcome: string) => {
-    setLearningOutcomes(learningOutcomes.filter((o) => o !== outcome));
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+          dispatch(clearError()); // ✅ clear error when dialog closes
+        }
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-xl border border-white/30">
         <DialogHeader className="space-y-3">
@@ -116,115 +127,87 @@ export default function CreateCourseForm({ children }: CreateCourseFormProps) {
             </div>
             Create New Course
           </DialogTitle>
-          <DialogDescription className="text-slate-600">
-            Fill in the details below to create a comprehensive course for your
-            students.
-          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Information */}
           <Card className="bg-white/60 backdrop-blur-sm border border-gray-200">
             <CardHeader>
               <CardTitle className="text-lg text-slate-900 flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-blue-600" />
                 Course Details
               </CardTitle>
-              <CardDescription>
-                Essential details about your course
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* title + code */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="text-slate-700 font-medium">
-                    Course Title *
-                  </Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g., Introduction to Web Development"
-                    required
-                    className="bg-white/80 border-gray-200 focus:border-gray-500"
-                  />
+                  <Label htmlFor="title">Course Title *</Label>
+                  <Input id="title" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="code" className="text-slate-700 font-medium">
-                    Subjects *
-                  </Label>
-                  <Input
-                    id="code"
-                    placeholder="e.g., WD101"
-                    required
-                    className="bg-white/80 border-gray-200 focus:border-gray-500"
-                  />
+                  <Label htmlFor="code">Course Code *</Label>
+                  <Input id="code" required />
                 </div>
               </div>
 
+              {/* description */}
               <div className="space-y-2">
-                <Label
-                  htmlFor="description"
-                  className="text-slate-700 font-medium"
-                >
-                  Short Description *
-                </Label>
-                <Textarea
-                  id="description"
-                  placeholder="Brief description of what students will learn..."
-                  required
-                  className="bg-white/80 border-gray-200 focus:border-gray-500 min-h-[80px]"
-                />
+                <Label htmlFor="description">Short Description *</Label>
+                <Textarea id="description" required />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* ✅ multi-selects */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="category"
-                    className="text-slate-700 font-medium"
-                  >
-                    Students *
-                  </Label>
-                  <Select required>
-                    <SelectTrigger className="bg-white/80 border-gray-200 focus:border-gray-500">
-                      <SelectValue placeholder="Select students" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ui-ux">
-                        show users whose role is students
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Students *</Label>
+                  <MultiSelect
+                    options={students.map((s) => ({
+                      label: s.name,
+                      value: s.id.toString(),
+                    }))}
+                    selected={selectedStudents}
+                    onChange={setSelectedStudents}
+                    placeholder="Select students..."
+                  />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="level" className="text-slate-700 font-medium">
-                    Faculties *
-                  </Label>
-                  <Select required>
-                    <SelectTrigger className="bg-white/80 border-gray-200 focus:border-gray-500">
-                      <SelectValue placeholder="Select faculties" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ui-ux">
-                        show faculties whose role is faculty
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Faculties *</Label>
+                  <MultiSelect
+                    options={faculties.map((f) => ({
+                      label: f.name,
+                      value: f.id.toString(),
+                    }))}
+                    selected={selectedFaculties}
+                    onChange={setSelectedFaculties}
+                    placeholder="Select faculties..."
+                  />
                 </div>
+
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="language"
-                    className="text-slate-700 font-medium"
-                  >
-                    Category *
-                  </Label>
-                  <Select required>
-                    <SelectTrigger className="bg-white/80 border-gray-200 focus:border-gray-500">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="upsc">UPSC</SelectItem>
-                      <SelectItem value="tnpc">TNPC</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Subjects *</Label>
+                  <MultiSelect
+                    options={subjects.map((sub) => ({
+                      label: sub.name,
+                      value: sub.id.toString(),
+                    }))}
+                    selected={selectedSubjects}
+                    onChange={setSelectedSubjects}
+                    placeholder="Select subjects..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Batches *</Label>
+                  <MultiSelect
+                    options={batches.map((b) => ({
+                      label: b.name,
+                      value: b.id.toString(),
+                    }))}
+                    selected={selectedBatches}
+                    onChange={setSelectedBatches}
+                    placeholder="Select batches..."
+                  />
                 </div>
               </div>
             </CardContent>
@@ -275,13 +258,17 @@ export default function CreateCourseForm({ children }: CreateCourseFormProps) {
               </div>
             </CardContent>
           </Card>
-
           {/* Form Actions */}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
           <div className="flex justify-end gap-3 pt-6 border-t border-white/30">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                dispatch(clearError()); // ✅ clear error when dialog closes
+              }}
               disabled={isLoading}
             >
               Cancel

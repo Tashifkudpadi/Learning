@@ -33,8 +33,8 @@ const facultySlice = createSlice({
   },
 });
 
-export const fetchFaculty = createAsyncThunk(
-  "faculty/fetchFaculty",
+export const fetchFaculties = createAsyncThunk(
+  "faculty/fetchFaculties",
   async (_, { dispatch }) => {
     try {
       const response = await axiosInstance.get("/faculties");
@@ -60,7 +60,7 @@ export const addFaculty = createAsyncThunk(
   ) => {
     try {
       const response = await axiosInstance.post("/faculties", facultyData);
-      dispatch(fetchFaculty());
+      dispatch(fetchFaculties());
       return response.data;
     } catch (error: any) {
       const errorMessage =
@@ -96,7 +96,7 @@ export const updateFaculty = createAsyncThunk(
         `/faculties/${facultyId}`,
         facultyData
       );
-      dispatch(fetchFaculty());
+      dispatch(fetchFaculties());
       return response.data;
     } catch (error: any) {
       const errorMessage =
@@ -115,7 +115,7 @@ export const deleteFaculty = createAsyncThunk(
   async (facultyId: number, { dispatch }) => {
     try {
       await axiosInstance.delete(`/faculties/${facultyId}`);
-      dispatch(fetchFaculty());
+      dispatch(fetchFaculties());
     } catch (error: any) {
       const errorMessage =
         typeof error.response?.data?.detail === "string"

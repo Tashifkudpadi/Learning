@@ -6,3 +6,6 @@ from .subject import Subject  # type: ignore
 from .faculty_subject import FacultySubject  # type: ignore
 from .batch import Batch  # type: ignore
 from .topic import Topic  # type: ignore
+from .course import Course  # type: ignore
+from .course_content import CourseContent  # type: ignore
+from .test import Test  # type: ignore

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 from app.schemas.topic import TopicOut
+from pydantic import ConfigDict
 
 
 class SubjectBase(BaseModel):
@@ -20,6 +21,4 @@ class SubjectOut(SubjectBase):
     id: int
     faculty_ids: List[int] = []
     topics: List[TopicOut] = []
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from pydantic import ConfigDict
 
 
 class TopicBase(BaseModel):
@@ -18,6 +19,4 @@ class TopicUpdate(TopicBase):
 class TopicOut(TopicBase):
     id: int
     subject_id: int
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

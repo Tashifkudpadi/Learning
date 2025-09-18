@@ -1,9 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, users, students, faculties, subjects, topics, batches
+from app.routers import auth, users, students, faculties, subjects, topics, batches, courses, course_content, tests
 from app.database import Base, engine
+from fastapi.staticfiles import StaticFiles
+
 
 app = FastAPI(title="EduPlatform LMS API")
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
+
+
+# load_dotenv()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,6 +33,10 @@ app.include_router(subjects.router, prefix="/subjects",
                    tags=["subjects"])
 app.include_router(topics.router, prefix="/topics", tags=["topics"])
 app.include_router(batches.router, prefix="/batches", tags=["batches"])
+app.include_router(courses.router, prefix="/courses", tags=["Courses"])
+app.include_router(course_content.router,
+                   prefix="/course-contents", tags=["CourseContents"])
+app.include_router(tests.router, prefix="/tests", tags=["Tests"])
 
 
 @app.get("/")

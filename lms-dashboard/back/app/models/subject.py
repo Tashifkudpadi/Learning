@@ -14,3 +14,5 @@ class Subject(Base):
         "Faculty", secondary="faculty_subject", back_populates="subjects")
     topics = relationship("Topic", back_populates="subject",
                           cascade="all, delete-orphan")
+    courses = relationship(
+        "Course", secondary="course_subject", back_populates="subjects")

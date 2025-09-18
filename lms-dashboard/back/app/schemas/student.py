@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import date
 from typing import List, Optional
 
+
 class StudentBase(BaseModel):
     name: str
     email: EmailStr
@@ -9,18 +10,21 @@ class StudentBase(BaseModel):
     mobile_number: str
     enrollment_date: date
 
+
 class StudentCreate(StudentBase):
     pass
 
+
 class StudentUpdate(StudentBase):
     pass
+
 
 class StudentOut(BaseModel):
     id: int
     name: str
     email: EmailStr
-    roll_number: int
-    mobile_number: int
+    roll_number: str
+    mobile_number: str
     enrollment_date: date
 
     class Config:

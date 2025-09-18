@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  fetchFaculty,
+  fetchFaculties,
   addFaculty,
   updateFaculty,
   deleteFaculty,
@@ -64,7 +64,7 @@ export default function FacultiesPage() {
   });
 
   useEffect(() => {
-    dispatch(fetchFaculty());
+    dispatch(fetchFaculties());
     dispatch(fetchSubjects());
   }, [dispatch]);
 

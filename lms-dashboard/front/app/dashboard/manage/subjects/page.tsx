@@ -9,7 +9,7 @@ import {
   updateSubject,
   deleteSubject,
 } from "@/store/subjects";
-import { fetchFaculty } from "@/store/faculties";
+import { fetchFaculties } from "@/store/faculties";
 import {
   Table,
   TableBody,
@@ -61,7 +61,7 @@ export default function SubjectsPage() {
 
   useEffect(() => {
     dispatch(fetchSubjects());
-    dispatch(fetchFaculty());
+    dispatch(fetchFaculties());
   }, [dispatch]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

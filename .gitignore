@@ -63,3 +63,6 @@ htmlcov/
 # Others (if used)
 coverage.xml
 *.lock
+
+# uploads 
+uploads/

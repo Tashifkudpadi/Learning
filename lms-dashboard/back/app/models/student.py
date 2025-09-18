@@ -14,3 +14,7 @@ class Student(Base):
     enrollment_date = Column(DateTime, nullable=True)
     batches = relationship(
         "Batch", secondary="batch_students", back_populates="students")
+    courses = relationship(
+        "Course", secondary="course_student", back_populates="students")
+    tests = relationship("Test", secondary="test_student",
+                         back_populates="students")

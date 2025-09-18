@@ -43,6 +43,7 @@ class PostCreate(PostBase):     # (post req)
 class UserResponse(BaseModel):  # this is for response user (get req)
     id: int
     email: EmailStr
+    phone_number: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -71,11 +72,18 @@ class PostOut(BaseModel):
 class UserCreate(BaseModel):  # this is for creating user, to verify users inputs
     email: EmailStr
     password: str
+    phone_number: Optional[str] = None
 
 
 class UserLogin(BaseModel):  # this is for login user, to verify users inputs
     email: EmailStr
     password: str
+
+
+class UserUpdate(BaseModel):  # this is for updating user, to verify users inputs
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    phone_number: Optional[str] = None
 
 
 class Token(BaseModel):  # once user is logged in, this is the response
