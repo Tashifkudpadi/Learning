@@ -29,12 +29,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
 import { MultiSelect } from "@/components/ui/multi-select";
 
 export default function BatchesPage() {
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const { batches, loading, error } = useAppSelector(
     (state) => state.batchesReducer
   );
@@ -42,6 +40,8 @@ export default function BatchesPage() {
   const { faculty } = useAppSelector((state) => state.facultyReducer);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLearnersDialogOpen, setIsLearnersDialogOpen] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState<any | null>(null);
   const [editId, setEditId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -107,8 +107,9 @@ export default function BatchesPage() {
     }
   };
 
-  const handleBatchClick = (id: number) => {
-    router.push(`/batches/${id}`);
+  const handleBatchClick = (batch: any) => {
+    setSelectedBatch(batch);
+    setIsLearnersDialogOpen(true);
   };
 
   return (
@@ -222,7 +223,7 @@ export default function BatchesPage() {
                 <TableCell>
                   <button
                     className="text-blue-600 hover:underline"
-                    onClick={() => handleBatchClick(batch.id)}
+                    onClick={() => handleBatchClick(batch)}
                   >
                     {batch.name}
                   </button>
@@ -251,6 +252,54 @@ export default function BatchesPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Learners dialog for a selected batch */}
+      <Dialog open={isLearnersDialogOpen} onOpenChange={setIsLearnersDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedBatch ? `Learners in ${selectedBatch.name}` : "Learners"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Roll No</TableHead>
+                  <TableHead>Mobile</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(() => {
+                  const ids: number[] = selectedBatch?.student_ids || [];
+                  const learners = students.filter((s: any) => ids.includes(s.id));
+                  if (!learners.length) {
+                    return (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          {selectedBatch ? "No learners assigned to this batch." : "Select a batch to view learners."}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+                  return learners.map((s: any, idx: number) => (
+                    <TableRow key={s.id}>
+                      <TableCell>{idx + 1}</TableCell>
+                      <TableCell>{s.name}</TableCell>
+                      <TableCell>{s.email}</TableCell>
+                      <TableCell>{s.roll_number}</TableCell>
+                      <TableCell>{s.mobile_number}</TableCell>
+                    </TableRow>
+                  ));
+                })()}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

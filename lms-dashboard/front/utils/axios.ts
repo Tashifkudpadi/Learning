@@ -1,6 +1,8 @@
 // lib/axios.ts
 
 import axios from "axios";
+import { store } from "@/store";
+import { setGlobalError } from "@/store/globalError";
 
 // Create a base Axios instance
 const axiosInstance = axios.create({
@@ -31,6 +33,37 @@ axiosInstance.interceptors.response.use(
     // You can catch token expiration, network errors etc. here
     if (error.response?.status === 401) {
       console.warn("Unauthorized - possibly invalid token");
+    }
+    try {
+      const res = error.response;
+      const cfg = error.config || {};
+      const url = (cfg?.baseURL || "") + (cfg?.url || "");
+      const method = (cfg?.method || "GET").toString().toUpperCase();
+      const status = res?.status;
+      const statusText = res?.statusText;
+      const data = res?.data;
+      const backendDetail =
+        (typeof data?.detail === "string" && data.detail) ||
+        (Array.isArray(data?.detail) && "Validation error(s)") ||
+        data?.message ||
+        error.message ||
+        "Network error";
+
+      const payload = {
+        message: backendDetail,
+        detail: {
+          status,
+          statusText,
+          method,
+          url,
+          data,
+          headers: res?.headers,
+        },
+      } as const;
+
+      store.dispatch(setGlobalError(payload));
+    } catch (_) {
+      // noop if store is not available for any reason
     }
     return Promise.reject(error);
   }
