@@ -1,6 +1,6 @@
 import { API_CONFIG } from "@/utils/config";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axios from "../../utils/axios";
 
 export const fetchCourses = createAsyncThunk("courses/fetchAll", async () => {
   const res = await axios.get(

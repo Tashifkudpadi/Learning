@@ -1,3 +1,6 @@
+from app.models.user import Role
+from app.utils.auth import get_current_user
+from sqlalchemy import or_
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -56,8 +59,43 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=List[CourseOut])
-def get_courses(db: Session = Depends(get_db)):
-    courses = db.query(Course).all()
+def get_courses(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    query = db.query(Course)
+
+    # ✅ Admin gets all courses
+    if current_user.role == Role.ADMIN:
+        courses = query.all()
+
+    else:
+        # ✅ Everyone can see public courses
+        # plus their own (depending on role)
+        base_filter = Course.is_public.is_(True)
+
+        if current_user.role == Role.STUDENT:
+            role_filter = or_(
+                Course.students.any(Student.email == current_user.email),
+                Course.batches.any(Batch.students.any(
+                    Student.email == current_user.email)),
+            )
+            query = query.filter(or_(base_filter, role_filter))
+
+        elif current_user.role == Role.FACULTY:
+            role_filter = or_(
+                Course.faculties.any(Faculty.email == current_user.email),
+                Course.batches.any(Batch.faculties.any(
+                    Faculty.email == current_user.email)),
+            )
+            query = query.filter(or_(base_filter, role_filter))
+
+        else:
+            # any other role (e.g., viewer) can see only public
+            query = query.filter(base_filter)
+
+        courses = query.distinct().all()
+
     return [
         CourseOut(
             id=c.id,
@@ -77,10 +115,30 @@ def get_courses(db: Session = Depends(get_db)):
 
 
 @router.get("/{course_id}", response_model=CourseOut)
-def get_course(course_id: int, db: Session = Depends(get_db)):
-    course = db.query(Course).filter(Course.id == course_id).first()
+def get_course(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    query = db.query(Course).filter(Course.id == course_id)
+
+    if current_user.role != Role.ADMIN:
+        access_filter = or_(
+            Course.is_public.is_(True),
+            Course.students.any(Student.email == current_user.email),
+            Course.faculties.any(Faculty.email == current_user.email),
+            Course.batches.any(Batch.students.any(
+                Student.email == current_user.email)),
+            Course.batches.any(Batch.faculties.any(
+                Faculty.email == current_user.email)),
+        )
+        query = query.filter(access_filter)
+
+    course = query.first()
     if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
+        raise HTTPException(
+            status_code=404, detail="Course not found or access denied")
+
     return CourseOut(
         id=course.id,
         course_name=course.course_name,

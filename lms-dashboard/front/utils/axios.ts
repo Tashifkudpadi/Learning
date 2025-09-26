@@ -16,8 +16,20 @@ const axiosInstance = axios.create({
 // Automatically attach token from localStorage to every request
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token =
+    let token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    // Fallback: read from persisted user if token key not set
+    if (!token && typeof window !== "undefined") {
+      try {
+        const rawUser = localStorage.getItem("user");
+        if (rawUser) {
+          const parsed = JSON.parse(rawUser);
+          token = parsed?.access_token || null;
+        }
+      } catch (_) {
+        // ignore JSON parse errors
+      }
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

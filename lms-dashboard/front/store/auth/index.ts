@@ -10,6 +10,7 @@ interface User {
   last_name?: string;
   student_id?: number;
   faculty_id?: number;
+  access_token?: string;
 }
 
 interface AuthState {
@@ -50,6 +51,11 @@ export const authAction = createAsyncThunk(
       // persist user in localStorage
       if (response.data) {
         localStorage.setItem("user", JSON.stringify(response.data));
+        // also persist access token if provided by backend
+        const token = (response.data as any)?.access_token;
+        if (token) {
+          localStorage.setItem("token", token);
+        }
       }
 
       return response.data; // 👈 only return user
@@ -68,6 +74,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       localStorage.removeItem("user");
+      localStorage.removeItem("token");
     },
     loadUserFromStorage: (state) => {
       const storedUser = localStorage.getItem("user");
