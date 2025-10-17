@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, users, students, faculties, subjects, topics, batches, courses, course_content, tests
+from app.routers import auth, users, students, faculties, subjects, topics, batches, courses, course_content, tests, course_content_presigned
 from app.database import Base, engine
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+
 import traceback
 import sys
 import os
@@ -42,6 +43,8 @@ app.include_router(courses.router, prefix="/courses", tags=["Courses"])
 app.include_router(course_content.router,
                    prefix="/course-contents", tags=["CourseContents"])
 app.include_router(tests.router, prefix="/tests", tags=["Tests"])
+app.include_router(course_content_presigned.router,
+                   prefix="/course-contents", tags=["CourseContents"])
 
 
 @app.get("/")

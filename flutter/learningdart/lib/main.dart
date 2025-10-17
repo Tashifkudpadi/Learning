@@ -4,12 +4,23 @@ void main() {
   runApp(const MyApp());
 }
 
+class Cat {
+  final String name;
+  Cat(this.name);
+}
+
+void test() {
+  final meow = Cat('fluffers');
+  print(meow.name);
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    test();
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(

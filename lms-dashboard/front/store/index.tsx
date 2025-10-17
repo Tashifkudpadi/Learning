@@ -7,6 +7,8 @@ import AuthReducer from "./auth";
 import UserReducer from "./users";
 import CoursesReducer from "./courses";
 import GlobalErrorReducer, { setGlobalError } from "./globalError";
+import CourseContentsReducer from "./courseContents";
+import TopicsReducer from "./topics";
 
 // Middleware to catch all rejected async thunks and surface as global error
 const globalErrorMiddleware: Middleware = (api) => (next) => (action: unknown) => {
@@ -42,6 +44,8 @@ export const store = configureStore({
     authReducer: AuthReducer,
     userReducer: UserReducer,
     coursesReducer: CoursesReducer,
+    coursesContentsReducer: CourseContentsReducer,
+    topicsReducer: TopicsReducer,
     studentsReducer: StudentsReducer,
     batchesReducer: BatchesReducer,
     facultyReducer: FacultyReducer,
