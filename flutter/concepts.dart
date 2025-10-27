@@ -82,3 +82,128 @@ void greet({required String name, required int age}) {
   print("Hello $name, you are $age years old.");
 }
 greet(name: "Alice", age: 30); // Named arguments
+
+////////////////////// dispose, initState, and setState methods/////////////////////
+// dispose, initState, and setState are methods used in Flutter's StatefulWidget lifecycle to manage state and resources.
+// initState is called when the widget is first created. It's used to initialize state and set up resources.
+@override
+void initState() {
+  super.initState();
+  // Initialization code here
+}
+// dispose is called when the widget is removed from the widget tree. It's used to clean up resources.
+@override
+void dispose() {
+  // Cleanup code here
+  super.dispose();
+}
+// setState is used to update the state of the widget and trigger a rebuild of the UI.
+setState(() {
+  // Update state here
+});
+
+///////////////////////// Navigator for navigation between screens/////////////////////
+Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) => SecondScreen()),
+);
+Navigator.pop(context); // To go back to the previous screen
+
+////////////////////// showDatePicker and showModalBottomSheet/////////////////////
+
+showDatePicker(
+  context: context,
+  initialDate: DateTime.now(),
+  firstDate: DateTime(2000),
+  lastDate: DateTime(2100),
+).then((selectedDate) {
+  if (selectedDate != null) {
+    // Handle the selected date
+  }
+});
+
+showModalBottomSheet(
+  context: context,
+  builder: (BuildContext context) {
+    return Container(
+      height: 200,
+      color: Colors.white,
+      child: Center(
+        child: Text('This is a modal bottom sheet'),
+      ),
+    );
+  },
+);
+
+showDialog(
+  context: context,
+  builder: (BuildContext context) {
+    return AlertDialog(
+      title: Text('Alert'),
+      content: Text('This is an alert dialog.'),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text('OK'),
+        ),
+      ],
+    );
+  },
+);
+and more show functions like showAboutDialog, showTimePicker, showLicensePage, showSearch, showGeneralDialog, showCupertinoModalPopup etc.
+
+////////////////////// async and await keywords/////////////////////
+Future<void> fetchData() async {
+  // Simulate a network request
+  await Future.delayed(Duration(seconds: 2));
+  print('Data fetched');
+}
+
+// ////////////////////////////////// ///////////////////////
+useSafeArea: true, // Ensures content is displayed within safe areas of the device basically avoiding notches and rounded corners
+Navigator.of(context).pushNamed('/routeName'); // To navigate using named routes
+Navigator.of(context).pop(); // To go back to the previous screen
+Navigator.of(context).pushReplacementNamed('/routeName'); // To replace the current screen with a new one
+Navigator.of(context).pushAndRemoveUntil(
+  MaterialPageRoute(builder: (context) => NewScreen()),
+  (Route<dynamic> route) => false,
+); // To clear the navigation stack and push a new screen
+Future.delayed(Duration(seconds: 2), () {
+  // Code to execute after a delay
+});
+
+/////////////////// cupertino widgets for iOS style//////////////////////
+import 'package:flutter/cupertino.dart';
+CupertinoButton(
+  child: Text('Press Me'),
+  onPressed: () {
+    // Handle button press
+  },
+);
+
+showCupertinoDialog(
+  context: context,
+  builder: (BuildContext context) {
+    return CupertinoAlertDialog(
+      title: Text('Alert'),
+      content: Text('This is an iOS-style alert dialog.'),
+      actions: [
+        CupertinoDialogAction(
+          child: Text('OK'),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
+    );
+  },
+);
+
+// check the platform 
+ if (Platform.isIOS) {
+    // Use Cupertino widgets for iOS
+  } else {
+    // Use Material widgets for Android and other platforms
+  }
