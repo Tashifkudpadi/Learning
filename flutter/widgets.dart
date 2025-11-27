@@ -370,3 +370,11 @@ Container(
     ),
     child: Text('hello world', style: TextStyle(fontSize: 30)),
   ),
+
+Inkwell(
+   onTap: () {},
+      splashColor: Theme.of(context).colorScheme.primary,
+      borderRadius: BorderRadius.circular(16),
+)
+GestureDetector()
+Stack() 

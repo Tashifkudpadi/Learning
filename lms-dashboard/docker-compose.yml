@@ -1,0 +1,88 @@
+version: "3.9"
+
+services:
+  # ───────────────────────────────
+  # 🟨 PostgreSQL Database
+  # ───────────────────────────────
+  postgres:
+    image: postgres:15
+    container_name: lms_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "Theta$$999"
+      POSTGRES_DB: lms_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lms_net
+
+  # ───────────────────────────────
+  # 🟩 pgAdmin (Database UI)
+  # ───────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: lms_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - lms_net
+
+  # ───────────────────────────────
+  # 🟦 MinIO Storage
+  # ───────────────────────────────
+  minio:
+    image: minio/minio
+    container_name: lms_minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Dashboard
+    volumes:
+      - minio_data:/data
+    networks:
+      - lms_net
+
+  # ───────────────────────────────
+  # 🟥 FastAPI Backend
+  # ───────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lms_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env.docker
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - lms_net
+
+# ───────────────────────────────
+# 🔵 Networks
+# ───────────────────────────────
+networks:
+  lms_net:
+
+# ───────────────────────────────
+# 📦 Volumes
+# ───────────────────────────────
+volumes:
+  postgres_data:
+  minio_data:
