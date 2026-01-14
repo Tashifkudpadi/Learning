@@ -4,8 +4,9 @@ import axios from "axios";
 
 export interface User {
   id: number;
-  first_name: string;
-  last_name: string;
+  first_name?: string;
+  last_name?: string;
+  name?: string;
   email: string;
   role: string;
   last_active: string | null;
@@ -70,7 +71,17 @@ export const addUser = createAsyncThunk(
           },
         }
       );
-      return response.data as User;
+      // Transform response: register API returns first_name/last_name, but UI expects name
+      const data = response.data;
+      return {
+        id: data.id,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        name: `${data.first_name} ${data.last_name}`,
+        email: data.email,
+        role: data.role,
+        last_active: null,
+      } as User;
     } catch (err: any) {
       return rejectWithValue(
         typeof err.response?.data?.detail === "string"

@@ -13,6 +13,9 @@ class Topic(Base):
 
     # relationship with Subject
     subject = relationship("Subject", back_populates="topics")
+    # relationship with Course (many-to-many)
+    courses = relationship(
+        "Course", secondary="course_topic", back_populates="topics")
 
     def __repr__(self):
         return f"<Topic id={self.id} name={self.name} subject_id={self.subject_id}>"

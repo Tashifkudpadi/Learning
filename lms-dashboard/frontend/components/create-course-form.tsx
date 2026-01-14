@@ -40,6 +40,7 @@ export default function CreateCourseForm({ children }: CreateCourseFormProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [courseImage, setCourseImage] = useState<string>("");
+  const [isPublic, setIsPublic] = useState(false);
 
   // ✅ selections state
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -89,7 +90,7 @@ export default function CreateCourseForm({ children }: CreateCourseFormProps) {
       subject_ids: selectedSubjects.map((id) => Number(id)),
       batch_ids: selectedBatches.map((id) => Number(id)),
       is_active: true,
-      is_public: false,
+      is_public: isPublic,
       course_img: courseImage,
     };
 
@@ -233,7 +234,7 @@ export default function CreateCourseForm({ children }: CreateCourseFormProps) {
                         Make this course visible to all users
                       </p>
                     </div>
-                    <Switch />
+                    <Switch checked={isPublic} onCheckedChange={setIsPublic} />{" "}
                   </div>
                 </div>
                 <div className="space-y-4">

@@ -127,8 +127,8 @@ export default function UsersPage() {
   const handleEditClick = (user: User) => {
     setEditUserId(user.id);
     setEditFormData({
-      first_name: user.name.split(" ")[0],
-      last_name: user.name.split(" ").slice(1).join(" "),
+      first_name: user?.name?.split(" ")[0] || "",
+      last_name: user.name?.split(" ").slice(1).join(" ") || "",
       email: user.email,
       role: user.role,
     });
@@ -138,7 +138,7 @@ export default function UsersPage() {
   // Filter users based on search
   const filteredUsers = users.filter(
     (user) =>
-      user.name?.toLowerCase().includes(search.toLowerCase()) ||
+      user.first_name?.toLowerCase().includes(search.toLowerCase()) ||
       user.email?.toLowerCase().includes(search.toLowerCase())
   );
 

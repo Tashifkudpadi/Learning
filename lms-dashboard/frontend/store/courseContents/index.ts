@@ -120,16 +120,10 @@ export const deleteContentsByTopic = createAsyncThunk<
   { state: RootState }
 >(
   "courseContents/deleteByTopic",
-  async ({ courseId, topicId }, { getState, dispatch, rejectWithValue }) => {
+  async ({ courseId, topicId }, { dispatch, rejectWithValue }) => {
     try {
-      const state = getState();
-      const items = selectCourseContents(state, courseId).filter(
-        (c) => c.topic_id === topicId
-      );
-      for (const it of items) {
-        await axiosInstance.delete(`/course-contents/${it.id}`);
-      }
-      await dispatch(fetchCourseContents(courseId));
+      // Call the new endpoint that removes topic from course and deletes its contents
+      await axiosInstance.delete(`/courses/${courseId}/topic/${topicId}`);
     } catch (e: any) {
       return rejectWithValue(e?.message || "Failed to delete topic contents");
     }
@@ -142,16 +136,10 @@ export const deleteContentsBySubject = createAsyncThunk<
   { state: RootState }
 >(
   "courseContents/deleteBySubject",
-  async ({ courseId, subjectId }, { getState, dispatch, rejectWithValue }) => {
+  async ({ courseId, subjectId }, { dispatch, rejectWithValue }) => {
     try {
-      const state = getState();
-      const items = selectCourseContents(state, courseId).filter(
-        (c) => c.subject_id === subjectId
-      );
-      for (const it of items) {
-        await axiosInstance.delete(`/course-contents/${it.id}`);
-      }
-      await dispatch(fetchCourseContents(courseId));
+      // Call the new endpoint that removes subject from course and deletes its contents
+      await axiosInstance.delete(`/courses/${courseId}/subject/${subjectId}`);
     } catch (e: any) {
       return rejectWithValue(e?.message || "Failed to delete subject contents");
     }
@@ -227,10 +215,9 @@ export const fetchCourseContentsByTopic = createAsyncThunk<
   async ({ courseId, topicId }, { rejectWithValue }) => {
     try {
       const res = await axiosInstance.get(
-        `/course-contents/course/${courseId}`
+        `/course-contents/course/${courseId}/topic/${topicId}`
       );
-      const allItems: CourseContent[] = res.data || [];
-      const items = allItems.filter((c) => c.topic_id === topicId);
+      const items: CourseContent[] = res.data || [];
 
       return { topicId, items };
     } catch (e: any) {
@@ -341,8 +328,10 @@ export const selectCourseContents = (state: RootState, courseId: number) =>
 export const selectCourseContentsLoading = (state: RootState) =>
   state.coursesContentsReducer?.loading || false;
 
-export const selectCourseContentsByTopic = (state: RootState, topicId: number) =>
-  state.coursesContentsReducer?.byTopic?.[topicId] || [];
+export const selectCourseContentsByTopic = (
+  state: RootState,
+  topicId: number
+) => state.coursesContentsReducer?.byTopic?.[topicId] || [];
 
 export const selectTopicContentsLoading = (state: RootState, topicId: number) =>
   state.coursesContentsReducer?.loadingTopics?.[topicId] || false;

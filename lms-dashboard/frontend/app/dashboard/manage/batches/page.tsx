@@ -47,7 +47,6 @@ export default function BatchesPage() {
     name: "",
     start_date: "",
     end_date: "",
-    num_learners: 0,
     student_ids: [] as number[],
     faculty_ids: [] as number[],
   });
@@ -87,7 +86,6 @@ export default function BatchesPage() {
       name: "",
       start_date: "",
       end_date: "",
-      num_learners: 0,
       student_ids: [],
       faculty_ids: [],
     });
@@ -254,7 +252,10 @@ export default function BatchesPage() {
       </div>
 
       {/* Learners dialog for a selected batch */}
-      <Dialog open={isLearnersDialogOpen} onOpenChange={setIsLearnersDialogOpen}>
+      <Dialog
+        open={isLearnersDialogOpen}
+        onOpenChange={setIsLearnersDialogOpen}
+      >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
@@ -275,12 +276,19 @@ export default function BatchesPage() {
               <TableBody>
                 {(() => {
                   const ids: number[] = selectedBatch?.student_ids || [];
-                  const learners = students.filter((s: any) => ids.includes(s.id));
+                  const learners = students.filter((s: any) =>
+                    ids.includes(s.id)
+                  );
                   if (!learners.length) {
                     return (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          {selectedBatch ? "No learners assigned to this batch." : "Select a batch to view learners."}
+                        <TableCell
+                          colSpan={5}
+                          className="text-center text-muted-foreground"
+                        >
+                          {selectedBatch
+                            ? "No learners assigned to this batch."
+                            : "Select a batch to view learners."}
                         </TableCell>
                       </TableRow>
                     );

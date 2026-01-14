@@ -311,12 +311,12 @@ export default function ViewCoursePage({
 
             {/* learners Tab */}
             <TabsContent value="learners" className="mt-6">
-              <LearnersTab />
+              <LearnersTab courseId={id} />
             </TabsContent>
 
             {/* batches Tab */}
             <TabsContent value="batches" className="mt-6">
-              <BatchesTab />
+              <BatchesTab courseId={id} />
             </TabsContent>
 
             {/* tests Tab */}

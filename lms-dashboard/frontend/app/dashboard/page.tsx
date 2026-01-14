@@ -31,11 +31,15 @@ export default function DashboardPage() {
     list: courses,
     loading,
     error,
+    hasFetched,
   } = useAppSelector((state) => state.coursesReducer);
 
   useEffect(() => {
-    dispatch(fetchCourses());
-  }, [dispatch]);
+    // Only fetch if not already fetched to prevent duplicate API calls
+    if (!hasFetched) {
+      dispatch(fetchCourses());
+    }
+  }, [dispatch, hasFetched]);
 
   if (loading) return <p>Loading courses...</p>;
 

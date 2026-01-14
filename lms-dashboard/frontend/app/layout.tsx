@@ -3,9 +3,8 @@ import "./globals.css";
 import ClientProvider from "./ClientProvider";
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.dev",
+  title: "LMS Dashboard",
+  description: "Learning Management System",
 };
 
 export default function RootLayout({

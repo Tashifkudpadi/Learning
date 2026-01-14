@@ -2,6 +2,35 @@ import { API_CONFIG } from "@/utils/config";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "../../utils/axios";
 
+export interface Topic {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+export interface SubjectWithTopics {
+  id: number;
+  name: string;
+  code: string;
+  topics: Topic[];
+}
+
+export interface Course {
+  id: number;
+  course_name: string;
+  course_desc?: string;
+  course_img?: string;
+  is_active: boolean;
+  is_public: boolean;
+  created_at: string;
+  batch_ids: number[];
+  student_ids: number[];
+  faculty_ids: number[];
+  subject_ids: number[];
+  topic_ids: number[];
+  subjects: SubjectWithTopics[];
+}
+
 export const fetchCourses = createAsyncThunk("courses/fetchAll", async () => {
   const res = await axios.get(
     `${API_CONFIG.BASE_API}${API_CONFIG.COURSES_API_URL}`
@@ -22,7 +51,7 @@ export const createCourse = createAsyncThunk(
 
 export const fetchCourseById = createAsyncThunk(
   "courses/fetchById",
-  async (id: string) => {
+  async (id: string | number) => {
     const res = await axios.get(
       `${API_CONFIG.BASE_API}${API_CONFIG.COURSES_API_URL}/${id}`
     );
@@ -53,16 +82,26 @@ export const deleteCourse = createAsyncThunk(
   }
 );
 
+interface CoursesState {
+  list: Course[];
+  selected: Course | null;
+  loading: boolean;
+  error: string | null;
+  hasFetched: boolean;
+}
+
+const initialState: CoursesState = {
+  list: [],
+  selected: null,
+  loading: false,
+  error: null,
+  hasFetched: false,
+};
+
 const courseSlice = createSlice({
   name: "courses",
-  initialState: {
-    list: [] as any[],
-    selected: null as any,
-    loading: false,
-    error: null as string | null,
-  },
+  initialState,
   reducers: {
-    // ✅ manual error reset (e.g., when closing dialog)
     clearError: (state) => {
       state.error = null;
     },
@@ -75,7 +114,8 @@ const courseSlice = createSlice({
       .addCase(fetchCourses.fulfilled, (state, action) => {
         state.loading = false;
         state.list = action.payload;
-        state.error = null; // ✅ clear error on success
+        state.error = null;
+        state.hasFetched = true;
       })
       .addCase(fetchCourses.rejected, (state, action) => {
         state.loading = false;
@@ -83,11 +123,12 @@ const courseSlice = createSlice({
       })
       .addCase(fetchCourseById.pending, (state) => {
         state.loading = true;
+        state.selected = null; // Clear stale data while loading new course
       })
       .addCase(fetchCourseById.fulfilled, (state, action) => {
         state.loading = false;
         state.selected = action.payload;
-        state.error = null; // ✅ clear error on success
+        state.error = null;
       })
       .addCase(fetchCourseById.rejected, (state, action) => {
         state.loading = false;
@@ -95,7 +136,7 @@ const courseSlice = createSlice({
       })
       .addCase(createCourse.fulfilled, (state, action) => {
         state.list.push(action.payload);
-        state.error = null; // ✅ clear error on success
+        state.error = null;
       })
       .addCase(createCourse.rejected, (state, action) => {
         state.loading = false;
@@ -108,7 +149,6 @@ const courseSlice = createSlice({
       .addCase(updateCourse.fulfilled, (state, action) => {
         state.loading = false;
         state.selected = action.payload;
-        // Replace in list if exists
         const idx = state.list.findIndex((c) => c.id === action.payload.id);
         if (idx !== -1) state.list[idx] = action.payload;
         state.error = null;
@@ -124,7 +164,6 @@ const courseSlice = createSlice({
       .addCase(deleteCourse.fulfilled, (state, action) => {
         state.loading = false;
         state.list = state.list.filter((c) => c.id !== action.payload.id);
-        // If the deleted course is selected, clear it
         if (state.selected && state.selected.id === action.payload.id) {
           state.selected = null;
         }

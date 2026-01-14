@@ -19,22 +19,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/store";
 import {
-  fetchCourseContents,
   addFileContent,
   addYouTubeContent,
-  selectCourseContents,
-  selectCourseContentsLoading,
-  selectSubjectsAndTopicsFromContents,
   deleteContentsBySubject,
   deleteContentsByTopic,
   deleteCourseContent,
   fetchCourseContentsByTopic,
   selectCourseContentsByTopic,
   selectTopicContentsLoading,
+  fetchCourseContents,
 } from "@/store/courseContents";
-import { fetchSubjects } from "@/store/subjects";
+import { fetchCourseById, Course } from "@/store/courses";
+import { fetchSubjects, addSubject } from "@/store/subjects";
 import { fetchTopicsBySubject, selectTopicsBySubject } from "@/store/topics";
 // Removed dialog imports; creation handled elsewhere if needed
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import axiosInstance from "@/utils/axios";
 
 export type Lesson = {
   id: number | string;
@@ -83,27 +89,78 @@ export default function ContentsTab({
   const [file, setFile] = React.useState<File | null>(null);
   const [showForm, setShowForm] = React.useState(false);
   const [error, setError] = React.useState<string>("");
-  const [selectedTopicId, setSelectedTopicId] = React.useState<number | null>(null);
+  const [selectedTopicId, setSelectedTopicId] = React.useState<number | null>(
+    null
+  );
   const contents = useSelector((s: RootState) =>
     selectedTopicId ? selectCourseContentsByTopic(s, selectedTopicId) : []
   );
   const loadingContents = useSelector((s: RootState) =>
     selectedTopicId ? selectTopicContentsLoading(s, selectedTopicId) : false
   );
-  const subjectsAndTopics = useSelector((s: RootState) =>
-    selectSubjectsAndTopicsFromContents(s, Number(courseId))
+  // Use subjects/topics from the selected course in the courses store
+  const selectedCourse = useSelector(
+    (s: RootState) => s.coursesReducer.selected as Course | null
   );
-  const subjects = subjectsAndTopics.subjects;
-  const topicsMap = subjectsAndTopics.map;
-  const allSubjects = useSelector((s: RootState) => s.subjectsReducer.subjects) as Array<{ id: number; name: string }>;
+  const courseLoading = useSelector(
+    (s: RootState) => s.coursesReducer.loading
+  );
+  // Build subjects array and topicsMap from the selected course
+  // Only use data if the selected course matches the current courseId to prevent stale data
+  const subjects = React.useMemo(() => {
+    if (!selectedCourse?.subjects) return [];
+    if (selectedCourse.id !== Number(courseId)) return [];
+    return selectedCourse.subjects.map((s) => ({ id: s.id, name: s.name }));
+  }, [selectedCourse, courseId]);
+  const topicsMap = React.useMemo(() => {
+    if (!selectedCourse?.subjects) return {};
+    if (selectedCourse.id !== Number(courseId)) return {};
+    const map: Record<number, { topics: Array<{ id: number; name: string }> }> = {};
+    for (const s of selectedCourse.subjects) {
+      map[s.id] = {
+        topics: s.topics.map((t) => ({ id: t.id, name: t.name })),
+      };
+    }
+    return map;
+  }, [selectedCourse, courseId]);
+  const allSubjects = useSelector(
+    (s: RootState) => s.subjectsReducer.subjects
+  ) as Array<{ id: number; name: string }>;
+  const subjectsHasFetched = useSelector(
+    (s: RootState) => s.subjectsReducer.hasFetched
+  );
   const [subjectId, setSubjectId] = React.useState<number | "">("");
   const [topicId, setTopicId] = React.useState<number | "">("");
-  const topicNamesMap = useSelector(
-    (s: RootState) => s.coursesContentsReducer.topicNames
-  );
-  const subjectNamesMap = useSelector(
-    (s: RootState) => s.coursesContentsReducer.subjectNames
-  );
+  const [openSubjectDialog, setOpenSubjectDialog] = React.useState(false);
+  const [openTopicDialog, setOpenTopicDialog] = React.useState(false);
+  const [newSubject, setNewSubject] = React.useState({ name: "", code: "" });
+  const [creatingSubject, setCreatingSubject] = React.useState(false);
+  const [newTopic, setNewTopic] = React.useState({
+    name: "",
+    description: "",
+  });
+  const [creatingTopic, setCreatingTopic] = React.useState(false);
+  // Build topic and subject name maps from the selected course
+  const topicNamesMap = React.useMemo(() => {
+    if (!selectedCourse?.subjects) return {};
+    if (selectedCourse.id !== Number(courseId)) return {};
+    const map: Record<number, { name: string; subject_id: number }> = {};
+    for (const s of selectedCourse.subjects) {
+      for (const t of s.topics) {
+        map[t.id] = { name: t.name, subject_id: s.id };
+      }
+    }
+    return map;
+  }, [selectedCourse, courseId]);
+  const subjectNamesMap = React.useMemo(() => {
+    if (!selectedCourse?.subjects) return {};
+    if (selectedCourse.id !== Number(courseId)) return {};
+    const map: Record<number, string> = {};
+    for (const s of selectedCourse.subjects) {
+      map[s.id] = s.name;
+    }
+    return map;
+  }, [selectedCourse, courseId]);
   const formTopics = useSelector((s: RootState) =>
     typeof subjectId === "number" && subjectId > 0
       ? selectTopicsBySubject(s, subjectId)
@@ -111,10 +168,13 @@ export default function ContentsTab({
   );
   // Removed subject/topic creation state (managed elsewhere)
   React.useEffect(() => {
-    // Fetch all course contents to build the subjects/topics tree structure
-    dispatch(fetchCourseContents(Number(courseId)));
-    dispatch(fetchSubjects());
-  }, [dispatch, courseId]);
+    // Fetch the course which includes subjects and topics
+    dispatch(fetchCourseById(Number(courseId)));
+    // Only fetch all subjects if not already fetched (for the add content form)
+    if (!subjectsHasFetched) {
+      dispatch(fetchSubjects());
+    }
+  }, [dispatch, courseId, subjectsHasFetched]);
 
   const handleTopicClick = React.useCallback(
     async (subId: number, topId: number) => {
@@ -123,7 +183,10 @@ export default function ContentsTab({
       setSelectedTopicId(topId);
       // Fetch contents for this topic
       await dispatch(
-        fetchCourseContentsByTopic({ courseId: Number(courseId), topicId: topId })
+        fetchCourseContentsByTopic({
+          courseId: Number(courseId),
+          topicId: topId,
+        })
       );
     },
     [dispatch, courseId]
@@ -131,7 +194,7 @@ export default function ContentsTab({
 
   const handleDeleteSubject = async (sid: number) => {
     const ok = window.confirm(
-      "Delete ALL course contents under this subject? This cannot be undone."
+      "Remove this subject and delete ALL its course contents? The subject will remain in the system but be removed from this course."
     );
     if (!ok) return;
     try {
@@ -143,20 +206,27 @@ export default function ContentsTab({
         setTopicId("");
         setSelectedTopicId(null);
       }
+      // Refresh the course to update subjects/topics
+      await dispatch(fetchCourseById(Number(courseId)));
     } catch (e) {
       // no-op; global error middleware will surface
     }
   };
 
   const handleDeleteContent = async (contentId: number) => {
-    const ok = window.confirm("Delete this media from the course-content? This cannot be undone.");
+    const ok = window.confirm(
+      "Delete this media from the course-content? This cannot be undone."
+    );
     if (!ok) return;
     try {
       await dispatch(deleteCourseContent(contentId)).unwrap();
       // Re-fetch the current topic's contents
       if (selectedTopicId) {
         await dispatch(
-          fetchCourseContentsByTopic({ courseId: Number(courseId), topicId: selectedTopicId })
+          fetchCourseContentsByTopic({
+            courseId: Number(courseId),
+            topicId: selectedTopicId,
+          })
         );
       }
     } catch (e) {
@@ -166,7 +236,7 @@ export default function ContentsTab({
 
   const handleDeleteTopic = async (tid: number) => {
     const ok = window.confirm(
-      "Delete ALL course contents under this topic? This cannot be undone."
+      "Remove this topic and delete ALL its course contents? The topic will remain in the system but be removed from this course."
     );
     if (!ok) return;
     try {
@@ -177,11 +247,62 @@ export default function ContentsTab({
         setTopicId("");
         setSelectedTopicId(null);
       }
+      // Refresh the course to update subjects/topics
+      await dispatch(fetchCourseById(Number(courseId)));
     } catch (e) {
       // no-op; global error middleware will surface
     }
   };
   // Removed legacy local topic fetching; using topics slice for form topics
+
+  const handleCreateSubject = async () => {
+    if (!newSubject.name.trim() || !newSubject.code.trim()) return;
+    try {
+      setCreatingSubject(true);
+      const created: any = await dispatch(
+        addSubject({
+          name: newSubject.name.trim(),
+          code: newSubject.code.trim(),
+          faculty_ids: [],
+        })
+      ).unwrap();
+
+      setOpenSubjectDialog(false);
+      setNewSubject({ name: "", code: "" });
+
+      if (created?.id) {
+        setSubjectId(created.id);
+        await dispatch(fetchTopicsBySubject(created.id));
+      }
+    } catch (e) {
+      // rely on global error handling from slice
+    } finally {
+      setCreatingSubject(false);
+    }
+  };
+
+  const handleCreateTopic = async () => {
+    if (!subjectId || !newTopic.name.trim()) return;
+    try {
+      setCreatingTopic(true);
+      await axiosInstance.post("/topics", {
+        name: newTopic.name.trim(),
+        description: newTopic.description.trim() || null,
+        subject_id: Number(subjectId),
+      });
+
+      setOpenTopicDialog(false);
+      setNewTopic({ name: "", description: "" });
+
+      if (typeof subjectId === "number") {
+        await dispatch(fetchTopicsBySubject(subjectId));
+      }
+    } catch (e) {
+      // rely on backend/global error handling
+    } finally {
+      setCreatingTopic(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -238,11 +359,14 @@ export default function ContentsTab({
       // Refresh the current topic's contents if it matches
       if (selectedTopicId) {
         await dispatch(
-          fetchCourseContentsByTopic({ courseId: Number(courseId), topicId: selectedTopicId })
+          fetchCourseContentsByTopic({
+            courseId: Number(courseId),
+            topicId: selectedTopicId,
+          })
         );
       }
-      // Also refresh the course contents to update the tree
-      await dispatch(fetchCourseContents(Number(courseId)));
+      // Also refresh the course to update subjects/topics
+      await dispatch(fetchCourseById(Number(courseId)));
     } catch (err) {
       setError("Failed to add content. Please try again.");
     } finally {
@@ -282,6 +406,14 @@ export default function ContentsTab({
           <h4 className="font-semibold mb-3 text-slate-900">
             Browse by Subject
           </h4>
+          {courseLoading && (
+            <div className="text-sm text-slate-600">Loading subjects...</div>
+          )}
+          {!courseLoading && subjects.length === 0 && (
+            <div className="text-sm text-slate-500">
+              No subjects with content yet. Add content to see subjects here.
+            </div>
+          )}
           <div className="space-y-3">
             {subjects.map((s) => {
               const entry = topicsMap[s.id];
@@ -347,7 +479,10 @@ export default function ContentsTab({
                                       active ? "bg-blue-600" : "bg-slate-300"
                                     }`}
                                   />
-                                  <span className="text-sm truncate" title={t.name}>
+                                  <span
+                                    className="text-sm truncate"
+                                    title={t.name}
+                                  >
                                     {t.name}
                                   </span>
                                 </button>
@@ -378,7 +513,8 @@ export default function ContentsTab({
             {selectedTopicId && (
               <div className="text-sm text-slate-600">
                 Showing contents for topic{" "}
-                {topicNamesMap[Number(selectedTopicId)]?.name || `#${selectedTopicId}`}
+                {topicNamesMap[Number(selectedTopicId)]?.name ||
+                  `#${selectedTopicId}`}
               </div>
             )}
           </div>
@@ -398,75 +534,75 @@ export default function ContentsTab({
               )}
               {!loadingContents &&
                 contents.map((c) => {
-                    const type = c.youtube_link
-                      ? "video"
-                      : c.file_type
-                      ? c.file_type
-                      : "file";
-                    return (
-                      <Card
-                        key={c.id}
-                        className={`bg-white/30 backdrop-blur-sm border border-white/30 hover:bg-white/40 transition-all duration-200 hover:scale-[1.02]`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`p-2 rounded-lg bg-white/50 ${getTypeColor(
-                                  type
-                                )}`}
-                              >
-                                {getTypeIcon(type)}
-                              </div>
-                              <div>
-                                <h4 className="font-semibold text-slate-900">
-                                  {c.title}
-                                </h4>
-                                <div className="flex items-center gap-2 text-sm text-slate-600">
-                                  <Badge variant="outline" className="text-xs">
-                                    {c.youtube_link
-                                      ? "youtube"
-                                      : c.file_type || "file"}
-                                  </Badge>
-                                  {c.topic_id && (
-                                    <span className="text-xs text-slate-500">
-                                      Topic{" "}
-                                      {topicNamesMap[c.topic_id]?.name ||
-                                        `#${c.topic_id}`}{" "}
-                                      {c.subject_id
-                                        ? `• ${
-                                            subjectNamesMap[c.subject_id] ||
-                                            `Subject #${c.subject_id}`
-                                          }`
-                                        : ""}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+                  const type = c.youtube_link
+                    ? "video"
+                    : c.file_type
+                    ? c.file_type
+                    : "file";
+                  return (
+                    <Card
+                      key={c.id}
+                      className={`bg-white/30 backdrop-blur-sm border border-white/30 hover:bg-white/40 transition-all duration-200 hover:scale-[1.02]`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`p-2 rounded-lg bg-white/50 ${getTypeColor(
+                                type
+                              )}`}
+                            >
+                              {getTypeIcon(type)}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleOpenContent(c)}
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                              >
-                                Open
-                              </Button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteContent(c.id)}
-                                className="px-2 py-1.5 text-sm rounded-md border border-red-200 text-red-600 hover:bg-red-50"
-                                aria-label="Delete media"
-                                title="Delete media"
-                              >
-                                Delete
-                              </button>
+                            <div>
+                              <h4 className="font-semibold text-slate-900">
+                                {c.title}
+                              </h4>
+                              <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <Badge variant="outline" className="text-xs">
+                                  {c.youtube_link
+                                    ? "youtube"
+                                    : c.file_type || "file"}
+                                </Badge>
+                                {c.topic_id && (
+                                  <span className="text-xs text-slate-500">
+                                    Topic{" "}
+                                    {topicNamesMap[c.topic_id]?.name ||
+                                      `#${c.topic_id}`}{" "}
+                                    {c.subject_id
+                                      ? `• ${
+                                          subjectNamesMap[c.subject_id] ||
+                                          `Subject #${c.subject_id}`
+                                        }`
+                                      : ""}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleOpenContent(c)}
+                              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                            >
+                              Open
+                            </Button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteContent(c.id)}
+                              className="px-2 py-1.5 text-sm rounded-md border border-red-200 text-red-600 hover:bg-red-50"
+                              aria-label="Delete media"
+                              title="Delete media"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
             </div>
           )}
         </div>
@@ -534,7 +670,24 @@ export default function ContentsTab({
                       </option>
                     ))}
                   </select>
-                  {/* Creation controls removed to avoid direct API in component */}
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <button
+                      type="button"
+                      className="underline hover:text-slate-900"
+                      onClick={() => setOpenSubjectDialog(true)}
+                    >
+                      + New subject
+                    </button>
+                    <span className="text-slate-400">|</span>
+                    <button
+                      type="button"
+                      className="underline hover:text-slate-900"
+                      disabled={!subjectId}
+                      onClick={() => setOpenTopicDialog(true)}
+                    >
+                      + New topic for subject
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="topic">Topic *</Label>
@@ -559,10 +712,132 @@ export default function ContentsTab({
                       </option>
                     ))}
                   </select>
-                  {/* Dialogs */}
                 </div>
               </div>
-              {/* Subject/Topic creation dialogs removed */}
+              {/* Subject Dialog */}
+              <Dialog
+                open={openSubjectDialog}
+                onOpenChange={setOpenSubjectDialog}
+              >
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create new subject</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 pt-2">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="dlg-subject-name" className="text-xs">
+                          Name
+                        </Label>
+                        <Input
+                          id="dlg-subject-name"
+                          value={newSubject.name}
+                          onChange={(e) =>
+                            setNewSubject((s) => ({
+                              ...s,
+                              name: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. Mathematics"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="dlg-subject-code" className="text-xs">
+                          Code
+                        </Label>
+                        <Input
+                          id="dlg-subject-code"
+                          value={newSubject.code}
+                          onChange={(e) =>
+                            setNewSubject((s) => ({
+                              ...s,
+                              code: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. MATH101"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() => setOpenSubjectDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={creatingSubject}
+                      onClick={handleCreateSubject}
+                    >
+                      {creatingSubject ? "Creating..." : "Create Subject"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              {/* Topic Dialog */}
+              <Dialog open={openTopicDialog} onOpenChange={setOpenTopicDialog}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create new topic</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 pt-2">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="dlg-topic-name" className="text-xs">
+                          Name
+                        </Label>
+                        <Input
+                          id="dlg-topic-name"
+                          value={newTopic.name}
+                          onChange={(e) =>
+                            setNewTopic((t) => ({ ...t, name: e.target.value }))
+                          }
+                          placeholder="e.g. Algebra"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="dlg-topic-desc" className="text-xs">
+                          Description
+                        </Label>
+                        <Input
+                          id="dlg-topic-desc"
+                          value={newTopic.description}
+                          onChange={(e) =>
+                            setNewTopic((t) => ({
+                              ...t,
+                              description: e.target.value,
+                            }))
+                          }
+                          placeholder="Optional"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() => setOpenTopicDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={creatingTopic || !subjectId}
+                      onClick={handleCreateTopic}
+                    >
+                      {creatingTopic ? "Creating..." : "Create Topic"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea

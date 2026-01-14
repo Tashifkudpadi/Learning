@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
@@ -39,15 +39,36 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { authAction } from "@/store/auth";
 
 export default function AuthForm() {
+  const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // const [error, setError] = useState<string | null>(null);
-  const [role, setRole] = useState<string>(""); // Add state for role
+  const [role, setRole] = useState<string>("");
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector((state) => state.authReducer);
 
   const router = useRouter();
+
+  // Ensure component is mounted before rendering interactive elements
+  // This prevents hydration mismatch with Radix UI components
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Show loading skeleton until client-side hydration is complete
+  if (!mounted) {
+    return (
+      <div className="grid lg:grid-cols-2 min-h-screen">
+        <div className="hidden lg:flex flex-col justify-center px-12 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800" />
+        <div className="flex items-center justify-center p-8 bg-background">
+          <div className="w-full max-w-md animate-pulse">
+            <div className="h-10 bg-muted rounded mb-6" />
+            <div className="h-96 bg-muted rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   async function onSubmit(
     event: React.FormEvent<HTMLFormElement>,

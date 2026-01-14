@@ -54,12 +54,23 @@ axiosInstance.interceptors.response.use(
       const status = res?.status;
       const statusText = res?.statusText;
       const data = res?.data;
+
       const backendDetail =
         (typeof data?.detail === "string" && data.detail) ||
         (Array.isArray(data?.detail) && "Validation error(s)") ||
         data?.message ||
         error.message ||
         "Network error";
+
+      // Only keep JSON-serializable primitives / plain objects in Redux
+      const safeData =
+        data && typeof data === "object"
+          ? {
+              // commonly useful fields from typical FastAPI/DRF error shapes
+              detail: data.detail ?? undefined,
+              message: data.message ?? undefined,
+            }
+          : data;
 
       const payload = {
         message: backendDetail,
@@ -68,8 +79,7 @@ axiosInstance.interceptors.response.use(
           statusText,
           method,
           url,
-          data,
-          headers: res?.headers,
+          data: safeData,
         },
       } as const;
 

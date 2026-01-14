@@ -11,11 +11,13 @@ interface Subject {
 interface SubjectState {
   subjects: Subject[];
   error: string;
+  hasFetched: boolean;
 }
 
 const initialState: SubjectState = {
   subjects: [],
   error: "",
+  hasFetched: false,
 };
 
 const subjectSlice = createSlice({
@@ -25,6 +27,7 @@ const subjectSlice = createSlice({
     setSubjects(state, action) {
       state.subjects = action.payload;
       state.error = "";
+      state.hasFetched = true;
     },
     hasError(state, action) {
       state.error = action.payload;

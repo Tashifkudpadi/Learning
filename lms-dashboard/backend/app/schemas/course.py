@@ -16,6 +16,7 @@ class CourseCreate(CourseBase):
     student_ids: Optional[List[int]] = []
     faculty_ids: Optional[List[int]] = []
     subject_ids: Optional[List[int]] = []
+    topic_ids: Optional[List[int]] = []
 
 
 class CourseUpdate(CourseBase):
@@ -23,6 +24,26 @@ class CourseUpdate(CourseBase):
     student_ids: Optional[List[int]] = []
     faculty_ids: Optional[List[int]] = []
     subject_ids: Optional[List[int]] = []
+    topic_ids: Optional[List[int]] = []
+
+
+class TopicOutNested(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SubjectOutNested(BaseModel):
+    id: int
+    name: str
+    code: str
+    topics: List[TopicOutNested] = []
+
+    class Config:
+        from_attributes = True
 
 
 class CourseOut(CourseBase):
@@ -31,7 +52,9 @@ class CourseOut(CourseBase):
     student_ids: List[int] = []
     faculty_ids: List[int] = []
     subject_ids: List[int] = []
+    topic_ids: List[int] = []
+    subjects: List[SubjectOutNested] = []
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

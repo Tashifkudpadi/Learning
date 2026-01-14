@@ -9,11 +9,23 @@ from app.models.course_content import CourseContent
 from app.models.subject import Subject
 from app.models.topic import Topic
 from app.schemas.course_content import CourseContentCreate, CourseContentOut, CourseContentUpdate
+from app.utils.minio_client import delete_file_from_minio
 
 router = APIRouter()
 
 UPLOAD_DIR = "uploads/course_contents"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+def auto_link_subject_topic_to_course(db: Session, course: Course, subject: Subject, topic: Topic):
+    """Auto-link subject and topic to course when content is added."""
+    # Add subject to course if not already linked
+    if subject not in course.subjects:
+        course.subjects.append(subject)
+    # Add topic to course if not already linked
+    if topic not in course.topics:
+        course.topics.append(topic)
+    db.commit()
 
 
 @router.post("/upload", response_model=CourseContentOut)
@@ -50,6 +62,9 @@ def upload_content(
     with open(file_path, "wb") as f:
         f.write(file.file.read())
 
+    # Auto-link subject and topic to course
+    auto_link_subject_topic_to_course(db, course, subject, topic)
+
     db_content = CourseContent(
         course_id=course_id,
         title=title,
@@ -83,6 +98,9 @@ def add_youtube_content(content: CourseContentCreate, db: Session = Depends(get_
         raise HTTPException(
             status_code=400, detail="Topic does not belong to the selected subject")
 
+    # Auto-link subject and topic to course
+    auto_link_subject_topic_to_course(db, course, subject, topic)
+
     db_content = CourseContent(
         course_id=content.course_id,
         title=content.title,
@@ -115,6 +133,9 @@ def create_content(content: CourseContentCreate, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=400, detail="Topic does not belong to the selected subject")
 
+    # Auto-link subject and topic to course
+    auto_link_subject_topic_to_course(db, course, subject, topic)
+
     db_content = CourseContent(
         course_id=content.course_id,
         title=content.title,
@@ -133,6 +154,15 @@ def create_content(content: CourseContentCreate, db: Session = Depends(get_db)):
 @router.get("/course/{course_id}", response_model=List[CourseContentOut])
 def get_contents(course_id: int, db: Session = Depends(get_db)):
     return db.query(CourseContent).filter(CourseContent.course_id == course_id).all()
+
+
+@router.get("/course/{course_id}/topic/{topic_id}", response_model=List[CourseContentOut])
+def get_contents_by_topic(course_id: int, topic_id: int, db: Session = Depends(get_db)):
+    """Get course contents filtered by course ID and topic ID."""
+    return db.query(CourseContent).filter(
+        CourseContent.course_id == course_id,
+        CourseContent.topic_id == topic_id
+    ).all()
 
 
 @router.put("/{content_id}", response_model=CourseContentOut)
@@ -181,12 +211,41 @@ def update_content(content_id: int, update: CourseContentUpdate, db: Session = D
     # )
 
 
+def delete_content_and_file(content: CourseContent, db: Session):
+    """Helper function to delete a content and its file from MinIO."""
+    # Delete file from MinIO if it exists
+    if content.file_url:
+        delete_file_from_minio(content.file_url)
+    # Delete from database
+    db.delete(content)
+
+
 @router.delete("/{content_id}")
 def delete_content(content_id: int, db: Session = Depends(get_db)):
     content = db.query(CourseContent).filter(
         CourseContent.id == content_id).first()
     if not content:
         raise HTTPException(status_code=404, detail="Content not found")
-    db.delete(content)
+    delete_content_and_file(content, db)
     db.commit()
     return {"message": "Content deleted successfully"}
+
+
+@router.delete("/by-topic/{topic_id}")
+def delete_contents_by_topic(topic_id: int, db: Session = Depends(get_db)):
+    """Delete all course contents for a specific topic."""
+    contents = db.query(CourseContent).filter(CourseContent.topic_id == topic_id).all()
+    for content in contents:
+        delete_content_and_file(content, db)
+    db.commit()
+    return {"message": f"Deleted {len(contents)} content(s) for topic {topic_id}"}
+
+
+@router.delete("/by-subject/{subject_id}")
+def delete_contents_by_subject(subject_id: int, db: Session = Depends(get_db)):
+    """Delete all course contents for a specific subject."""
+    contents = db.query(CourseContent).filter(CourseContent.subject_id == subject_id).all()
+    for content in contents:
+        delete_content_and_file(content, db)
+    db.commit()
+    return {"message": f"Deleted {len(contents)} content(s) for subject {subject_id}"}

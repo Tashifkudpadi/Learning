@@ -4,7 +4,9 @@ from typing import List
 from app.database import get_db
 from app.models.topic import Topic
 from app.models.subject import Subject
+from app.models.course_content import CourseContent
 from app.schemas.topic import TopicCreate, TopicUpdate, TopicOut
+from app.utils.minio_client import delete_file_from_minio
 
 router = APIRouter()
 
@@ -63,10 +65,23 @@ def update_topic(topic_id: int, update: TopicUpdate, db: Session = Depends(get_d
 
 @router.delete("/{topic_id}")
 def delete_topic(topic_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a topic from the system entirely.
+    This will also delete all course contents for this topic (including MinIO files).
+    Use DELETE /courses/{course_id}/topic/{topic_id} to just remove from a course.
+    """
     topic = db.query(Topic).filter(Topic.id == topic_id).first()
     if not topic:
         raise HTTPException(status_code=404, detail="Topic not found")
 
+    # Delete all course contents for this topic and their files from MinIO
+    contents = db.query(CourseContent).filter(CourseContent.topic_id == topic_id).all()
+    for content in contents:
+        if content.file_url:
+            delete_file_from_minio(content.file_url)
+        db.delete(content)
+
+    # Delete the topic
     db.delete(topic)
     db.commit()
-    return {"message": "Topic deleted successfully"}
+    return {"message": f"Topic and {len(contents)} content(s) deleted successfully"}

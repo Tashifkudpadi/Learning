@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.models.subject import Subject
+from app.models.topic import Topic
 from app.models.faculty_subject import FacultySubject
+from app.models.course_content import CourseContent
 from app.database import get_db
 from app.schemas.subject import SubjectCreate, SubjectUpdate, SubjectOut
+from app.utils.minio_client import delete_file_from_minio
 from typing import List
 
 router = APIRouter()
@@ -106,13 +109,34 @@ def update_subject(subject_id: int, update: SubjectUpdate, db: Session = Depends
 
 @router.delete("/{subject_id}")
 def delete_subject(subject_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a subject from the system entirely.
+    This will also delete all its topics and course contents (including MinIO files).
+    Use DELETE /courses/{course_id}/subject/{subject_id} to just remove from a course.
+    """
     subject = db.query(Subject).filter(Subject.id == subject_id).first()
     if not subject:
         raise HTTPException(status_code=404, detail="Subject not found")
 
-    # Delete associations first
+    # 1. Delete all course contents for this subject and their files from MinIO
+    contents = db.query(CourseContent).filter(CourseContent.subject_id == subject_id).all()
+    contents_count = len(contents)
+    for content in contents:
+        if content.file_url:
+            delete_file_from_minio(content.file_url)
+        db.delete(content)
+
+    # 2. Delete all topics for this subject
+    topics = db.query(Topic).filter(Topic.subject_id == subject_id).all()
+    topics_count = len(topics)
+    for topic in topics:
+        db.delete(topic)
+
+    # 3. Delete faculty associations
     db.query(FacultySubject).filter(
         FacultySubject.subject_id == subject_id).delete()
+
+    # 4. Delete the subject
     db.delete(subject)
     db.commit()
-    return {"message": "Subject deleted successfully"}
+    return {"message": f"Subject, {topics_count} topic(s), and {contents_count} content(s) deleted successfully"}

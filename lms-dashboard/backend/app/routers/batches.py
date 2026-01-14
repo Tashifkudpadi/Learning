@@ -16,7 +16,6 @@ def create_batch(batch: BatchCreate, db: Session = Depends(get_db)):
         name=batch.name,
         start_date=batch.start_date,
         end_date=batch.end_date,
-        num_learners=batch.num_learners,
     )
 
     # attach students

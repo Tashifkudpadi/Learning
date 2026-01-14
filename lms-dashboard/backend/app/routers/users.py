@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.models.user import User, Role
@@ -28,6 +29,16 @@ class UserUpdate(BaseModel):
     role: Optional[str]
 
 
+def format_utc_datetime(dt):
+    """Format datetime as ISO string with UTC timezone indicator."""
+    if dt is None:
+        return None
+    # If datetime is naive (no timezone), assume it's UTC
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
+
 @router.get("/", response_model=List[UserResponse])
 async def get_users(db: Session = Depends(get_db)):
     users = db.query(User).all()
@@ -37,7 +48,7 @@ async def get_users(db: Session = Depends(get_db)):
             name=f"{user.first_name} {user.last_name}",
             email=user.email,
             role=user.role.value,
-            last_active=user.last_active.isoformat() if user.last_active else None
+            last_active=format_utc_datetime(user.last_active)
         )
         for user in users
     ]
@@ -77,15 +88,20 @@ async def update_user(user_id: int, user_update: UserUpdate, db: Session = Depen
         user.last_name = user_update.last_name
     if user_update.email:
         existing_user = db.query(User).filter(
-            User.email == user_update.email, User.id != user_id).first()
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use")
-        user.email = user_update.email
-    if user_update.role:
+            User.email == user_update.email, User.id != user_id
+        ).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already in use"
+        )
+    user.email = user_update.email
+    if user_update.role is not None and user_update.role != "":
         if user_update.role not in [role.value for role in Role]:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid role"
+            )
+    user.role = Role(user_update.role)
 
     db.commit()
     db.refresh(user)
@@ -94,5 +110,5 @@ async def update_user(user_id: int, user_update: UserUpdate, db: Session = Depen
         name=f"{user.first_name} {user.last_name}",
         email=user.email,
         role=user.role.value,
-        last_active=user.last_active.isoformat() if user.last_active else None
+        last_active=format_utc_datetime(user.last_active)
     )

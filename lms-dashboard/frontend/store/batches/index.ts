@@ -28,12 +28,8 @@ export const fetchBatches = createAsyncThunk(
   "batches/fetchBatches",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
       const res = await axios.get(
-        `${API_CONFIG.BASE_API}${API_CONFIG.BATCHES_API_URL}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${API_CONFIG.BASE_API}${API_CONFIG.BATCHES_API_URL}`
       );
       return res.data as Batch[];
     } catch (err: any) {
@@ -49,13 +45,9 @@ export const addBatch = createAsyncThunk(
   "batches/addBatch",
   async (batchData: Omit<Batch, "id">, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
       const res = await axios.post(
         `${API_CONFIG.BASE_API}${API_CONFIG.BATCHES_API_URL}`,
-        batchData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        batchData
       );
       return res.data as Batch;
     } catch (err: any) {
@@ -74,13 +66,9 @@ export const updateBatch = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const token = localStorage.getItem("token");
       const res = await axios.put(
         `${API_CONFIG.BASE_API}${API_CONFIG.BATCHES_API_URL}/${batchId}`,
-        batchData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        batchData
       );
       return res.data as Batch;
     } catch (err: any) {
@@ -96,12 +84,8 @@ export const deleteBatch = createAsyncThunk(
   "batches/deleteBatch",
   async (batchId: number, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
       await axios.delete(
-        `${API_CONFIG.BASE_API}${API_CONFIG.BATCHES_API_URL}/${batchId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `${API_CONFIG.BASE_API}${API_CONFIG.BATCHES_API_URL}/${batchId}`
       );
       return batchId;
     } catch (err: any) {

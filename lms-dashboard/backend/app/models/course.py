@@ -37,6 +37,13 @@ course_subject = Table(
         "subjects.id", ondelete="CASCADE")),
 )
 
+course_topic = Table(
+    "course_topic",
+    Base.metadata,
+    Column("course_id", Integer, ForeignKey("courses.id", ondelete="CASCADE")),
+    Column("topic_id", Integer, ForeignKey("topics.id", ondelete="CASCADE")),
+)
+
 
 class Course(Base):
     __tablename__ = "courses"
@@ -59,6 +66,8 @@ class Course(Base):
         "Faculty", secondary=course_faculty, back_populates="courses")
     subjects = relationship(
         "Subject", secondary=course_subject, back_populates="courses")
+    topics = relationship(
+        "Topic", secondary=course_topic, back_populates="courses")
 
     contents = relationship(
         "CourseContent", back_populates="course", cascade="all, delete")

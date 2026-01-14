@@ -10,9 +10,34 @@ from app.models.batch import Batch
 from app.models.student import Student
 from app.models.faculty import Faculty
 from app.models.subject import Subject
-from app.schemas.course import CourseCreate, CourseUpdate, CourseOut
+from app.models.topic import Topic
+from app.models.course_content import CourseContent
+from app.schemas.course import CourseCreate, CourseUpdate, CourseOut, SubjectOutNested, TopicOutNested
+from app.utils.minio_client import delete_file_from_minio
 
 router = APIRouter()
+
+
+def build_subjects_with_topics(course, topic_ids: List[int]) -> List[SubjectOutNested]:
+    """Build nested subjects with their topics based on course's topic_ids."""
+    # Group topics by subject
+    subject_topics_map = {}
+    for topic in course.topics:
+        if topic.subject_id not in subject_topics_map:
+            subject_topics_map[topic.subject_id] = []
+        subject_topics_map[topic.subject_id].append(topic)
+
+    # Build the nested structure
+    subjects_out = []
+    for subject in course.subjects:
+        topics_for_subject = subject_topics_map.get(subject.id, [])
+        subjects_out.append(SubjectOutNested(
+            id=subject.id,
+            name=subject.name,
+            code=subject.code,
+            topics=[TopicOutNested(id=t.id, name=t.name, description=t.description) for t in topics_for_subject]
+        ))
+    return subjects_out
 
 
 @router.post("/", response_model=CourseOut)
@@ -38,6 +63,9 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
     if course.subject_ids:
         db_course.subjects = db.query(Subject).filter(
             Subject.id.in_(course.subject_ids)).all()
+    if course.topic_ids:
+        db_course.topics = db.query(Topic).filter(
+            Topic.id.in_(course.topic_ids)).all()
 
     db.add(db_course)
     db.commit()
@@ -55,6 +83,8 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
         student_ids=[s.id for s in db_course.students],
         faculty_ids=[f.id for f in db_course.faculties],
         subject_ids=[s.id for s in db_course.subjects],
+        topic_ids=[t.id for t in db_course.topics],
+        subjects=build_subjects_with_topics(db_course, [t.id for t in db_course.topics]),
     )
 
 
@@ -109,6 +139,8 @@ def get_courses(
             student_ids=[s.id for s in c.students],
             faculty_ids=[f.id for f in c.faculties],
             subject_ids=[s.id for s in c.subjects],
+            topic_ids=[t.id for t in c.topics],
+            subjects=build_subjects_with_topics(c, [t.id for t in c.topics]),
         )
         for c in courses
     ]
@@ -151,6 +183,8 @@ def get_course(
         student_ids=[s.id for s in course.students],
         faculty_ids=[f.id for f in course.faculties],
         subject_ids=[s.id for s in course.subjects],
+        topic_ids=[t.id for t in course.topics],
+        subjects=build_subjects_with_topics(course, [t.id for t in course.topics]),
     )
 
 
@@ -178,6 +212,9 @@ def update_course(course_id: int, update: CourseUpdate, db: Session = Depends(ge
     if update.subject_ids is not None:
         course.subjects = db.query(Subject).filter(
             Subject.id.in_(update.subject_ids)).all()
+    if update.topic_ids is not None:
+        course.topics = db.query(Topic).filter(
+            Topic.id.in_(update.topic_ids)).all()
 
     db.commit()
     db.refresh(course)
@@ -194,6 +231,8 @@ def update_course(course_id: int, update: CourseUpdate, db: Session = Depends(ge
         student_ids=[s.id for s in course.students],
         faculty_ids=[f.id for f in course.faculties],
         subject_ids=[s.id for s in course.subjects],
+        topic_ids=[t.id for t in course.topics],
+        subjects=build_subjects_with_topics(course, [t.id for t in course.topics]),
     )
 
 
@@ -205,3 +244,319 @@ def delete_course(course_id: int, db: Session = Depends(get_db)):
     db.delete(course)
     db.commit()
     return {"message": "Course deleted successfully"}
+
+
+@router.delete("/{course_id}/subject/{subject_id}")
+def remove_subject_from_course(course_id: int, subject_id: int, db: Session = Depends(get_db)):
+    """
+    Remove a subject from a course:
+    1. Delete all course contents for this subject in this course (including MinIO files)
+    2. Remove all topics of this subject from the course
+    3. Remove the subject from the course
+    Note: The subject and topics themselves are NOT deleted from the main tables.
+    """
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    subject = db.query(Subject).filter(Subject.id == subject_id).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # 1. Delete all course contents for this subject in this course
+    contents = db.query(CourseContent).filter(
+        CourseContent.course_id == course_id,
+        CourseContent.subject_id == subject_id
+    ).all()
+    contents_count = len(contents)
+    for content in contents:
+        if content.file_url:
+            delete_file_from_minio(content.file_url)
+        db.delete(content)
+
+    # 2. Remove all topics of this subject from the course
+    topics_to_remove = [t for t in course.topics if t.subject_id == subject_id]
+    topics_count = len(topics_to_remove)
+    for topic in topics_to_remove:
+        course.topics.remove(topic)
+
+    # 3. Remove the subject from the course
+    if subject in course.subjects:
+        course.subjects.remove(subject)
+
+    db.commit()
+    return {"message": f"Removed subject from course. Deleted {contents_count} content(s) and unlinked {topics_count} topic(s)."}
+
+
+@router.delete("/{course_id}/topic/{topic_id}")
+def remove_topic_from_course(course_id: int, topic_id: int, db: Session = Depends(get_db)):
+    """
+    Remove a topic from a course:
+    1. Delete all course contents for this topic in this course (including MinIO files)
+    2. Remove the topic from the course
+    Note: The topic itself is NOT deleted from the main topics table.
+    """
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    topic = db.query(Topic).filter(Topic.id == topic_id).first()
+    if not topic:
+        raise HTTPException(status_code=404, detail="Topic not found")
+
+    # 1. Delete all course contents for this topic in this course
+    contents = db.query(CourseContent).filter(
+        CourseContent.course_id == course_id,
+        CourseContent.topic_id == topic_id
+    ).all()
+    contents_count = len(contents)
+    for content in contents:
+        if content.file_url:
+            delete_file_from_minio(content.file_url)
+        db.delete(content)
+
+    # 2. Remove the topic from the course
+    if topic in course.topics:
+        course.topics.remove(topic)
+
+    db.commit()
+    return {"message": f"Removed topic from course. Deleted {contents_count} content(s)."}
+
+
+# ─────────────────────────────────────────────────────────────
+# Learners (Students) Management for Course
+# ─────────────────────────────────────────────────────────────
+
+from app.models.student import Student
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime as dt
+
+
+class LearnerOut(BaseModel):
+    id: int
+    name: str
+    email: str
+    roll_number: Optional[str] = None
+    mobile_number: Optional[str] = None
+    enrollment_date: Optional[dt] = None
+    batch_id: Optional[int] = None
+    batch_name: Optional[str] = None
+    source: str  # "direct" or "batch"
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/{course_id}/learners", response_model=List[LearnerOut])
+def get_course_learners(course_id: int, db: Session = Depends(get_db)):
+    """
+    Get all learners (students) for a course.
+    Returns students directly added to course + students from linked batches.
+    """
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    learners = []
+    seen_student_ids = set()
+
+    # 1. Get students from batches linked to the course
+    for batch in course.batches:
+        for student in batch.students:
+            if student.id not in seen_student_ids:
+                seen_student_ids.add(student.id)
+                learners.append(LearnerOut(
+                    id=student.id,
+                    name=student.name,
+                    email=student.email,
+                    roll_number=student.roll_number,
+                    mobile_number=student.mobile_number,
+                    enrollment_date=student.enrollment_date,
+                    batch_id=batch.id,
+                    batch_name=batch.name,
+                    source="batch"
+                ))
+
+    # 2. Get students directly added to the course
+    for student in course.students:
+        if student.id not in seen_student_ids:
+            seen_student_ids.add(student.id)
+            learners.append(LearnerOut(
+                id=student.id,
+                name=student.name,
+                email=student.email,
+                roll_number=student.roll_number,
+                mobile_number=student.mobile_number,
+                enrollment_date=student.enrollment_date,
+                batch_id=None,
+                batch_name=None,
+                source="direct"
+            ))
+
+    return learners
+
+
+@router.post("/{course_id}/learners/{student_id}")
+def add_learner_to_course(course_id: int, student_id: int, db: Session = Depends(get_db)):
+    """
+    Add a student directly to the course.
+    Validates that the student is not already in a batch linked to the course.
+    """
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    # Check if student is already directly added to the course
+    if student in course.students:
+        raise HTTPException(status_code=400, detail="Student is already added to this course")
+
+    # Check if student is in any batch linked to the course
+    for batch in course.batches:
+        if student in batch.students:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Student is already in batch '{batch.name}' which is linked to this course"
+            )
+
+    # Add student to course
+    course.students.append(student)
+    db.commit()
+    return {"message": f"Student '{student.name}' added to course successfully"}
+
+
+@router.delete("/{course_id}/learners/{student_id}")
+def remove_learner_from_course(
+    course_id: int,
+    student_id: int,
+    batch_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Remove a student from the course.
+    - If source is 'direct' (batch_id is None): remove from course.students
+    - If source is 'batch' (batch_id provided): remove student from that batch
+    """
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    if batch_id:
+        # Remove student from the batch
+        batch = db.query(Batch).filter(Batch.id == batch_id).first()
+        if not batch:
+            raise HTTPException(status_code=404, detail="Batch not found")
+        if student not in batch.students:
+            raise HTTPException(status_code=400, detail="Student is not in this batch")
+        batch.students.remove(student)
+        db.commit()
+        return {"message": f"Student '{student.name}' removed from batch '{batch.name}'"}
+    else:
+        # Remove student from course directly
+        if student not in course.students:
+            raise HTTPException(status_code=400, detail="Student is not directly added to this course")
+        course.students.remove(student)
+        db.commit()
+        return {"message": f"Student '{student.name}' removed from course"}
+
+
+# ─────────────────────────────────────────────────────────────
+# Batches Management for Course
+# ─────────────────────────────────────────────────────────────
+
+class CourseBatchOut(BaseModel):
+    id: int
+    name: str
+    start_date: Optional[dt] = None
+    end_date: Optional[dt] = None
+    num_learners: int
+    num_faculties: int
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/{course_id}/batches", response_model=List[CourseBatchOut])
+def get_course_batches(course_id: int, db: Session = Depends(get_db)):
+    """
+    Get all batches linked to a course with learner and faculty counts.
+    """
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    batches = []
+    for batch in course.batches:
+        batches.append(CourseBatchOut(
+            id=batch.id,
+            name=batch.name,
+            start_date=batch.start_date,
+            end_date=batch.end_date,
+            num_learners=len(batch.students),
+            num_faculties=len(batch.faculties),
+        ))
+    return batches
+
+
+@router.post("/{course_id}/batches/{batch_id}")
+def add_batch_to_course(course_id: int, batch_id: int, db: Session = Depends(get_db)):
+    """
+    Add a batch to the course.
+    """
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    batch = db.query(Batch).filter(Batch.id == batch_id).first()
+    if not batch:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    if batch in course.batches:
+        raise HTTPException(status_code=400, detail="Batch is already linked to this course")
+
+    # Check if any students from this batch are already directly added to the course
+    direct_student_ids = {s.id for s in course.students}
+    batch_student_ids = {s.id for s in batch.students}
+    overlapping = direct_student_ids & batch_student_ids
+
+    if overlapping:
+        # Get names of overlapping students for the error message
+        overlapping_names = [s.name for s in batch.students if s.id in overlapping]
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot add batch. Students already directly in course: {', '.join(overlapping_names[:3])}{'...' if len(overlapping_names) > 3 else ''}"
+        )
+
+    course.batches.append(batch)
+    db.commit()
+    return {"message": f"Batch '{batch.name}' added to course successfully"}
+
+
+@router.delete("/{course_id}/batches/{batch_id}")
+def remove_batch_from_course(course_id: int, batch_id: int, db: Session = Depends(get_db)):
+    """
+    Remove a batch from the course.
+    This only unlinks the batch - students remain in the batch.
+    """
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    batch = db.query(Batch).filter(Batch.id == batch_id).first()
+    if not batch:
+        raise HTTPException(status_code=404, detail="Batch not found")
+
+    if batch not in course.batches:
+        raise HTTPException(status_code=400, detail="Batch is not linked to this course")
+
+    course.batches.remove(batch)
+    db.commit()
+    return {"message": f"Batch '{batch.name}' removed from course"}
