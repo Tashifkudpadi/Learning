@@ -1,13 +1,22 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearGlobalError } from "@/store/globalError";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 export default function GlobalErrorDialog() {
+  const [mounted, setMounted] = useState(false);
   const dispatch = useAppDispatch();
   const { message, detail } = useAppSelector((s) => s.globalErrorReducer);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render Dialog until client-side hydration is complete
+  if (!mounted) return null;
 
   const open = Boolean(message);
   const onCopy = async () => {

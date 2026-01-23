@@ -187,7 +187,7 @@ var person1 = { name: "Vivek" };
 var detailsOfPerson1 = bikeDetails.displayDetails.bind(
   person1,
   "TS0122",
-  "Bullet"
+  "Bullet",
 );
 
 // Binds the displayDetails function to the person1 object
